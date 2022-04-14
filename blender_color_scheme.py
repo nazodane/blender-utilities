@@ -179,9 +179,9 @@ class COLORSCHEME_UL_ColorsList(bpy.types.UIList):
 
         col = layout.column()
         row = col.row(align=True)
+        row.label(text="", icon="SOLO_ON")
         for i in range(item.length):
             row.prop(item, "color%s"%(i+1), text="")
-        row.operator(COLORSCHEME_OT_ColorSchemeFavoriteRemove.bl_idname, text="", icon="PANEL_CLOSE")
 
     def draw_filter(self, context, layout): # hide useless filter menus
         row = layout.row()
@@ -223,7 +223,9 @@ class COLORSCHEME_PT_CustomPanel(bpy.types.Panel):
             row.prop(scene, "colorscheme_calculated%s"%(i+1), text="")
         row.operator(COLORSCHEME_OT_ColorSchemeFavorite.bl_idname, text="", icon="SOLO_ON")
 
-        layout.label(text="Favorites:")
+        row = layout.row(align=True)
+        row.label(text="Favorites:")
+        row.operator(COLORSCHEME_OT_ColorSchemeFavoriteRemove.bl_idname, text="", icon="PANEL_CLOSE")
 #        layout.prop(scene, "colorscheme_favorites", text="")
         layout.template_list("COLORSCHEME_UL_ColorsList", "", scene, "colorscheme_favorites", scene, "active_colorscheme_favorite_index")
 
