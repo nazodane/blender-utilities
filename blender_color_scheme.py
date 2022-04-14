@@ -126,16 +126,20 @@ class COLORSCHEME_PropertiesGroup(bpy.types.PropertyGroup):
                         default=0)
     color1: FloatVectorProperty(name="Color 1", 
                                 subtype='COLOR', 
-                                default=[0.0,0.0,0.0])
+                                get=lambda t: t["color1"],
+                                set=lambda t, v: None)
     color2: FloatVectorProperty(name="Color 2", 
                                 subtype='COLOR', 
-                                default=[0.0,0.0,0.0])
+                                get=lambda t: t["color2"],
+                                set=lambda t, v: None)
     color3: FloatVectorProperty(name="Color 3", 
-                                subtype='COLOR', 
-                                default=[0.0,0.0,0.0])
+                                subtype='COLOR',
+                                get=lambda t: t["color3"],
+                                set=lambda t, v: None)
     color4: FloatVectorProperty(name="Color 4", 
-                                subtype='COLOR', 
-                                default=[0.0,0.0,0.0])
+                                subtype='COLOR',
+                                get=lambda t: t["color4"],
+                                set=lambda t, v: None)
 
 
 def method_to_length(method):
@@ -151,10 +155,10 @@ class COLORSCHEME_OT_ColorSchemeFavorite(bpy.types.Operator):
         scene = context.scene
         cs = scene.colorscheme_favorites.add()
         cs.length = method_to_length(scene.colorscheme_method)
-        cs.color1 = scene.colorscheme_calculated1
-        cs.color2 = scene.colorscheme_calculated2
-        cs.color3 = scene.colorscheme_calculated3
-        cs.color4 = scene.colorscheme_calculated4
+        cs["color1"] = scene.colorscheme_calculated1
+        cs["color2"] = scene.colorscheme_calculated2
+        cs["color3"] = scene.colorscheme_calculated3
+        cs["color4"] = scene.colorscheme_calculated4
         return {'FINISHED'}
 
 class COLORSCHEME_OT_ColorSchemeFavoriteRemove(bpy.types.Operator):
@@ -195,7 +199,6 @@ class COLORSCHEME_PT_CustomPanel(bpy.types.Panel):
         layout = self.layout
         layout.label(text="", icon='PLUGIN')
 
-    # メニューの描画処理
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -233,49 +236,49 @@ from math import modf
 # from gcs-scheme.cc
 def colorscheme_update(self, context):
     if self.colorscheme_method == "COMPLEMENTS":
-        self.colorscheme_calculated1 = self.colorscheme_base
+        self["colorscheme_calculated1"] = self.colorscheme_base
 #        self.colorscheme_calculated2 = self.colorscheme_base
 #        self.colorscheme_calculated2.h += maxHueValue/2
-        self.colorscheme_calculated2 = hsv_to_rgb(self.colorscheme_base.h + maxHueValue/2,
+        self["colorscheme_calculated2"] = hsv_to_rgb(self.colorscheme_base.h + maxHueValue/2,
                                                 self.colorscheme_base.s,
                                                 self.colorscheme_base.v)
     elif self.colorscheme_method == "SPLIT_COMPLEMENTS":
         offset = maxHueValue / 15
-        self.colorscheme_calculated1 = self.colorscheme_base
-        self.colorscheme_calculated2 = hsv_to_rgb(self.colorscheme_base.h + maxHueValue/2 - offset,
+        self["colorscheme_calculated1"] = self.colorscheme_base
+        self["colorscheme_calculated2"] = hsv_to_rgb(self.colorscheme_base.h + maxHueValue/2 - offset,
                                                 self.colorscheme_base.s,
                                                 self.colorscheme_base.v)
-        self.colorscheme_calculated3 = hsv_to_rgb(self.colorscheme_base.h + maxHueValue/2 + offset,
+        self["colorscheme_calculated3"] = hsv_to_rgb(self.colorscheme_base.h + maxHueValue/2 + offset,
                                                 self.colorscheme_base.s,
                                                 self.colorscheme_base.v)
     elif self.colorscheme_method == "TRIADS":
         offset = maxHueValue / 3
-        self.colorscheme_calculated1 = self.colorscheme_base
-        self.colorscheme_calculated2 = hsv_to_rgb(self.colorscheme_base.h + offset,
+        self["colorscheme_calculated1"] = self.colorscheme_base
+        self["colorscheme_calculated2"] = hsv_to_rgb(self.colorscheme_base.h + offset,
                                                 self.colorscheme_base.s,
                                                 self.colorscheme_base.v)
-        self.colorscheme_calculated3 = hsv_to_rgb(self.colorscheme_base.h - offset,
+        self["colorscheme_calculated3"] = hsv_to_rgb(self.colorscheme_base.h - offset,
                                                 self.colorscheme_base.s,
                                                 self.colorscheme_base.v)
     elif self.colorscheme_method == "TETRADS":
         offset = maxHueValue / 4
-        self.colorscheme_calculated1 = self.colorscheme_base
-        self.colorscheme_calculated2 = hsv_to_rgb(self.colorscheme_base.h + offset,
+        self["colorscheme_calculated1"] = self.colorscheme_base
+        self["colorscheme_calculated2"] = hsv_to_rgb(self.colorscheme_base.h + offset,
                                                 self.colorscheme_base.s,
                                                 self.colorscheme_base.v)
-        self.colorscheme_calculated3 = hsv_to_rgb(self.colorscheme_base.h + maxHueValue / 2,
+        self["colorscheme_calculated3"] = hsv_to_rgb(self.colorscheme_base.h + maxHueValue / 2,
                                                 self.colorscheme_base.s,
                                                 self.colorscheme_base.v)
-        self.colorscheme_calculated4 = hsv_to_rgb(self.colorscheme_base.h + maxHueValue / 2 + offset,
+        self["colorscheme_calculated4"] = hsv_to_rgb(self.colorscheme_base.h + maxHueValue / 2 + offset,
                                                 self.colorscheme_base.s,
                                                 self.colorscheme_base.v)
     elif self.colorscheme_method == "ANALOGOUS":
         offset = maxHueValue / 12
-        self.colorscheme_calculated1 = hsv_to_rgb(self.colorscheme_base.h - offset,
+        self["colorscheme_calculated1"] = hsv_to_rgb(self.colorscheme_base.h - offset,
                                                 self.colorscheme_base.s,
                                                 self.colorscheme_base.v)
-        self.colorscheme_calculated2 = self.colorscheme_base
-        self.colorscheme_calculated3 = hsv_to_rgb(self.colorscheme_base.h + offset,
+        self["colorscheme_calculated2"] = self.colorscheme_base
+        self["colorscheme_calculated3"] = hsv_to_rgb(self.colorscheme_base.h + offset,
                                                 self.colorscheme_base.s,
                                                 self.colorscheme_base.v)
     elif self.colorscheme_method == "MONOCHROMATIC":
@@ -297,9 +300,9 @@ def colorscheme_update(self, context):
                                         modf(self.colorscheme_base.v + 2 * maxSvValue / 3)[0]))
 
         tmp = sorted(tmp, key=lambda t: luminance(t))
-        self.colorscheme_calculated1 = tmp[0]
-        self.colorscheme_calculated2 = tmp[1]
-        self.colorscheme_calculated3 = tmp[2]
+        self["colorscheme_calculated1"] = tmp[0]
+        self["colorscheme_calculated2"] = tmp[1]
+        self["colorscheme_calculated3"] = tmp[2]
 
 def init_props():
     scene = bpy.types.Scene
@@ -328,19 +331,23 @@ def init_props():
 
     scene.colorscheme_calculated1 = FloatVectorProperty(name="Color Scheme Calculated 1", 
                                                 subtype='COLOR', 
-                                                default=[0.0,0.0,0.0])
+                                                get=lambda t: t["colorscheme_calculated1"],
+                                                set=lambda t, v: None)
 
     scene.colorscheme_calculated2 = FloatVectorProperty(name="Color Scheme Calculated 2", 
-                                                subtype='COLOR', 
-                                                default=[0.0,0.0,0.0])
+                                                subtype='COLOR',
+                                                get=lambda t: t["colorscheme_calculated2"],
+                                                set=lambda t, v: None)
 
     scene.colorscheme_calculated3 = FloatVectorProperty(name="Color Scheme Calculated 3", 
                                                 subtype='COLOR', 
-                                                default=[0.0,0.0,0.0])
+                                                get=lambda t: t["colorscheme_calculated3"],
+                                                set=lambda t, v: None)
 
     scene.colorscheme_calculated4 = FloatVectorProperty(name="Color Scheme Calculated 4", 
                                                 subtype='COLOR', 
-                                                default=[0.0,0.0,0.0])
+                                                get=lambda t: t["colorscheme_calculated4"],
+                                                set=lambda t, v: None)
 
     scene.colorscheme_favorites = CollectionProperty(type=COLORSCHEME_PropertiesGroup)
     scene.active_colorscheme_favorite_index = IntProperty(name="Active favorite color scheme index")
