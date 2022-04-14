@@ -183,6 +183,9 @@ class COLORSCHEME_UL_ColorsList(bpy.types.UIList):
             row.prop(item, "color%s"%(i+1), text="")
         row.operator(COLORSCHEME_OT_ColorSchemeFavoriteRemove.bl_idname, text="", icon="PANEL_CLOSE")
 
+    def draw_filter(self, context, layout): # hide useless filter menus
+        row = layout.row()
+
 class COLORSCHEME_PT_CustomPanel(bpy.types.Panel):
 
     bl_label = "Color Schemes"
@@ -222,7 +225,7 @@ class COLORSCHEME_PT_CustomPanel(bpy.types.Panel):
 
         layout.label(text="Favorites:")
 #        layout.prop(scene, "colorscheme_favorites", text="")
-        layout.template_list("COLORSCHEME_UL_ColorsList", "", scene, "colorscheme_favorites", scene, "active_colorscheme_favorite_index")       
+        layout.template_list("COLORSCHEME_UL_ColorsList", "", scene, "colorscheme_favorites", scene, "active_colorscheme_favorite_index")
 
 # from gcs-color.cc
 redLuminance = 0.2126
