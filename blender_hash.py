@@ -68,6 +68,7 @@ class HASH_MT_Default(bpy.types.Menu):
         layout.prop(scene, "show_hash_crc32")
         layout.prop(scene, "show_hash_adler32")
 
+        layout.separator()
         layout.prop(scene, "hash_digest_format")
 
 class HASH_PT_CustomPanel(bpy.types.Panel):
