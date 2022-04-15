@@ -126,19 +126,23 @@ class COLORSCHEME_PropertiesGroup(bpy.types.PropertyGroup):
                         default=0)
     color1: FloatVectorProperty(name="Color 1", 
                                 subtype='COLOR', 
-                                get=lambda t: t["color1"],
+                                get=lambda t: t["color1"]
+                                              if "color1" in t else [0.0,0.0,0.0],
                                 set=lambda t, v: None)
     color2: FloatVectorProperty(name="Color 2", 
                                 subtype='COLOR', 
-                                get=lambda t: t["color2"],
+                                get=lambda t: t["color2"]
+                                              if "color2" in t else [0.0,0.0,0.0],
                                 set=lambda t, v: None)
     color3: FloatVectorProperty(name="Color 3", 
                                 subtype='COLOR',
-                                get=lambda t: t["color3"],
+                                get=lambda t: t["color3"]
+                                              if "color3" in t else [0.0,0.0,0.0],
                                 set=lambda t, v: None)
     color4: FloatVectorProperty(name="Color 4", 
                                 subtype='COLOR',
-                                get=lambda t: t["color4"],
+                                get=lambda t: t["color4"]
+                                              if "color4" in t else [0.0,0.0,0.0],
                                 set=lambda t, v: None)
 
 
@@ -336,22 +340,26 @@ def init_props():
 
     scene.colorscheme_calculated1 = FloatVectorProperty(name="Color Scheme Calculated 1", 
                                                 subtype='COLOR', 
-                                                get=lambda t: t["colorscheme_calculated1"],
+                                                get=lambda t: t["colorscheme_calculated1"]
+                                                if "colorscheme_calculated1" in t else [0.0,0.0,0.0],
                                                 set=lambda t, v: None)
 
     scene.colorscheme_calculated2 = FloatVectorProperty(name="Color Scheme Calculated 2", 
                                                 subtype='COLOR',
-                                                get=lambda t: t["colorscheme_calculated2"],
+                                                get=lambda t: t["colorscheme_calculated2"]
+                                                if "colorscheme_calculated2" in t else [0.0,0.0,0.0],
                                                 set=lambda t, v: None)
 
     scene.colorscheme_calculated3 = FloatVectorProperty(name="Color Scheme Calculated 3", 
                                                 subtype='COLOR', 
-                                                get=lambda t: t["colorscheme_calculated3"],
+                                                get=lambda t: t["colorscheme_calculated3"]
+                                                if "colorscheme_calculated3" in t else [0.0,0.0,0.0],
                                                 set=lambda t, v: None)
 
     scene.colorscheme_calculated4 = FloatVectorProperty(name="Color Scheme Calculated 4", 
                                                 subtype='COLOR', 
-                                                get=lambda t: t["colorscheme_calculated4"],
+                                                get=lambda t: t["colorscheme_calculated4"]
+                                                if "colorscheme_calculated4" in t else [0.0,0.0,0.0],
                                                 set=lambda t, v: None)
 
     scene.colorscheme_favorites = CollectionProperty(type=COLORSCHEME_PropertiesGroup)
