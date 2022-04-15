@@ -7,6 +7,6 @@ The color scheme addon is based on [Agave 0.4.7](https://web.archive.org/web/201
 ![Screenshot of Color Scheme addon](screenshot_color_scheme.png)
 
 ## Hash addon for Blender
-The hash addon is my recreation of [GTKHash](https://github.com/tristanheaven/gtkhash). However the source code is not based on GTKHash.
+The hash addon is my recreation of [GtkHash 1.2](https://github.com/tristanheaven/gtkhash). However the source code is not based on GtkHash.
 
 ![Screenshot of Hash addon](screenshot_hash.png)
