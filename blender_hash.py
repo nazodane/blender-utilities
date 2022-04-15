@@ -180,22 +180,38 @@ def hash_update(self, context):
         bin = self.hash_base_text.encode()
     else:
         bin = open(bpy.path.abspath(self.hash_base_file), "rb").read()
-    self["hash_calculated_md5"] = hex_to_format(self, hash_calc(self, bin, md5))
-    self["hash_calculated_sha1"] = hex_to_format(self, hash_calc(self, bin, sha1))
-    self["hash_calculated_sha224"] = hex_to_format(self, hash_calc(self, bin, sha224))
-    self["hash_calculated_sha256"] = hex_to_format(self, hash_calc(self, bin, sha256))
-    self["hash_calculated_sha384"] = hex_to_format(self, hash_calc(self, bin, sha384))
-    self["hash_calculated_sha512"] = hex_to_format(self, hash_calc(self, bin, sha512))
-    self["hash_calculated_sha3_224"] = hex_to_format(self, hash_calc(self, bin, sha3_224))
-    self["hash_calculated_sha3_256"] = hex_to_format(self, hash_calc(self, bin, sha3_256))
-    self["hash_calculated_sha3_384"] = hex_to_format(self, hash_calc(self, bin, sha3_384))
-    self["hash_calculated_sha3_512"] = hex_to_format(self, hash_calc(self, bin, sha3_512))
-    self["hash_calculated_blake2b"] = hex_to_format(self, hash_calc(self, bin, blake2b))
-    self["hash_calculated_blake2s"] = hex_to_format(self, hash_calc(self, bin, blake2s))
-#    self["hash_calculated_shake_128"] = hex_to_format(self, hash_calc(self, bin, shake_128)) # length?
-#    self["hash_calculated_shake_256"] = hex_to_format(self, hash_calc(self, bin, shake_256)) # length?
-    self["hash_calculated_crc32"] = hex_to_format(self, format(crc32(bin), "08x"))
-    self["hash_calculated_adler32"] = hex_to_format(self, format(adler32(bin), "08x"))
+    if self.show_hash_md5:
+        self["hash_calculated_md5"] = hex_to_format(self, hash_calc(self, bin, md5))
+    if self.show_hash_sha1:
+        self["hash_calculated_sha1"] = hex_to_format(self, hash_calc(self, bin, sha1))
+    if self.show_hash_sha224:
+        self["hash_calculated_sha224"] = hex_to_format(self, hash_calc(self, bin, sha224))
+    if self.show_hash_sha256:
+        self["hash_calculated_sha256"] = hex_to_format(self, hash_calc(self, bin, sha256))
+    if self.show_hash_sha256:
+        self["hash_calculated_sha384"] = hex_to_format(self, hash_calc(self, bin, sha384))
+    if self.show_hash_sha512:
+        self["hash_calculated_sha512"] = hex_to_format(self, hash_calc(self, bin, sha512))
+    if self.show_hash_sha3_224:
+        self["hash_calculated_sha3_224"] = hex_to_format(self, hash_calc(self, bin, sha3_224))
+    if self.show_hash_sha3_256:
+        self["hash_calculated_sha3_256"] = hex_to_format(self, hash_calc(self, bin, sha3_256))
+    if self.show_hash_sha3_384:
+        self["hash_calculated_sha3_384"] = hex_to_format(self, hash_calc(self, bin, sha3_384))
+    if self.show_hash_sha3_512:
+        self["hash_calculated_sha3_512"] = hex_to_format(self, hash_calc(self, bin, sha3_512))
+    if self.show_hash_blake2b:
+        self["hash_calculated_blake2b"] = hex_to_format(self, hash_calc(self, bin, blake2b))
+    if self.show_hash_blake2s:
+        self["hash_calculated_blake2s"] = hex_to_format(self, hash_calc(self, bin, blake2s))
+#    if self.show_hash_shake_128:
+#        self["hash_calculated_shake_128"] = hex_to_format(self, hash_calc(self, bin, shake_128)) # length?
+#    if self.show_hash_shake_256:
+#        self["hash_calculated_shake_256"] = hex_to_format(self, hash_calc(self, bin, shake_256)) # length?
+    if self.show_hash_crc32:
+        self["hash_calculated_crc32"] = hex_to_format(self, format(crc32(bin), "08x"))
+    if self.show_hash_adler32:
+        self["hash_calculated_adler32"] = hex_to_format(self, format(adler32(bin), "08x"))
 
 def init_props():
     scene = bpy.types.Scene
@@ -313,37 +329,53 @@ def init_props():
                                                 set=lambda t, v: None)
 
     scene.show_hash_md5 = BoolProperty(name="Show MD5 Hash", 
-                                        default=True)
+                                        default=True,
+                                        update=hash_update)
     scene.show_hash_sha1 = BoolProperty(name="Show SHA1 Hash", 
-                                        default=True)
+                                        default=True,
+                                        update=hash_update)
     scene.show_hash_sha224 = BoolProperty(name="Show SHA224 Hash", 
-                                        default=False)
+                                        default=False,
+                                        update=hash_update)
     scene.show_hash_sha256 = BoolProperty(name="Show SHA256 Hash", 
-                                        default=True)
+                                        default=True,
+                                        update=hash_update)
     scene.show_hash_sha384 = BoolProperty(name="Show SHA384 Hash", 
-                                        default=False)
+                                        default=False,
+                                        update=hash_update)
     scene.show_hash_sha512 = BoolProperty(name="Show SHA512 Hash", 
-                                        default=False)
+                                        default=False,
+                                        update=hash_update)
     scene.show_hash_sha3_224 = BoolProperty(name="Show SHA3_224 Hash", 
-                                        default=False)
+                                        default=False,
+                                        update=hash_update)
     scene.show_hash_sha3_256 = BoolProperty(name="Show SHA3_256 Hash", 
-                                        default=False)
+                                        default=False,
+                                        update=hash_update)
     scene.show_hash_sha3_384 = BoolProperty(name="Show SHA3_384 Hash", 
-                                        default=False)
+                                        default=False,
+                                        update=hash_update)
     scene.show_hash_sha3_512 = BoolProperty(name="Show SHA3_512 Hash", 
-                                        default=False)
+                                        default=False,
+                                        update=hash_update)
     scene.show_hash_blake2b = BoolProperty(name="Show Blake2b Hash", 
-                                        default=False)
+                                        default=False,
+                                        update=hash_update)
     scene.show_hash_blake2s = BoolProperty(name="Show Blake2s Hash", 
-                                        default=False)
+                                        default=False,
+                                        update=hash_update)
 #    scene.show_hash_shake_128 = BoolProperty(name="Show Shake_128 Hash", 
-#                                        default=False)
+#                                        default=False,
+#                                        update=hash_update)
 #    scene.show_hash_shake_256 = BoolProperty(name="Show Shake_256 Hash", 
-#                                        default=False)
+#                                        default=False,
+#                                        update=hash_update)
     scene.show_hash_crc32 = BoolProperty(name="Show CRC32 Hash", 
-                                        default=True)
+                                        default=True,
+                                        update=hash_update)
     scene.show_hash_adler32 = BoolProperty(name="Show Adler32 Hash", 
-                                        default=False)
+                                        default=False,
+                                        update=hash_update)
 
     scene.hash_digest_format = EnumProperty(
         name="Digest Format",
