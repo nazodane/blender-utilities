@@ -21,7 +21,7 @@
 # Copyright (C) 2022 Toshimitsu Kimura <lovesyao@gmail.com>
 #
 # Note: The UI is heavily inspired from GtkHash
-# TODO: HMAC support
+# TODO: File List support
 
 import bpy
 from bpy.props import (
@@ -101,48 +101,57 @@ class HASH_PT_CustomPanel(bpy.types.Panel):
             layout.prop(scene, "hash_base_file", text="File")
         layout.prop(scene, "hash_check_text", text="Check")
 
+        layout.prop(scene, "hash_is_hmac", text="HMAC")
+        row = layout.row()
+        row.enabled = scene.hash_is_hmac
+        row.prop(scene, "hash_hmac_salt", text="Key")
+
+        prefix = ""
+        if scene.hash_is_hmac:
+            prefix = "HMAC-"
+
         layout.label(text="Calculated:")
         if scene.show_hash_md5:
-            layout.prop(scene, "hash_calculated_md5", text="MD5",
+            layout.prop(scene, "hash_calculated_md5", text=prefix+"MD5",
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_md5 else "NONE")
         if scene.show_hash_sha1:
-            layout.prop(scene, "hash_calculated_sha1", text="SHA1",
+            layout.prop(scene, "hash_calculated_sha1", text=prefix+"SHA1",
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_sha1 else "NONE")
         if scene.show_hash_sha224:
-            layout.prop(scene, "hash_calculated_sha224", text="SHA224",
+            layout.prop(scene, "hash_calculated_sha224", text=prefix+"SHA224",
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_sha224 else "NONE")
         if scene.show_hash_sha256:
-            layout.prop(scene, "hash_calculated_sha256", text="SHA256",
+            layout.prop(scene, "hash_calculated_sha256", text=prefix+"SHA256",
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_sha256 else "NONE")
         if scene.show_hash_sha384:
-            layout.prop(scene, "hash_calculated_sha384", text="SHA384",
+            layout.prop(scene, "hash_calculated_sha384", text=prefix+"SHA384",
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_sha384 else "NONE")
         if scene.show_hash_sha512:
-            layout.prop(scene, "hash_calculated_sha512", text="SHA512",
+            layout.prop(scene, "hash_calculated_sha512", text=prefix+"SHA512",
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_sha512 else "NONE")
         if scene.show_hash_sha3_224:
-            layout.prop(scene, "hash_calculated_sha3_224", text="SHA3_224",
+            layout.prop(scene, "hash_calculated_sha3_224", text=prefix+"SHA3_224",
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_sha3_224 else "NONE")
         if scene.show_hash_sha3_256:
-            layout.prop(scene, "hash_calculated_sha3_256", text="SHA3_256",
+            layout.prop(scene, "hash_calculated_sha3_256", text=prefix+"SHA3_256",
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_sha3_256 else "NONE")
         if scene.show_hash_sha3_384:
-            layout.prop(scene, "hash_calculated_sha3_384", text="SHA3_384",
+            layout.prop(scene, "hash_calculated_sha3_384", text=prefix+"SHA3_384",
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_sha3_384 else "NONE")
         if scene.show_hash_sha3_512:
-            layout.prop(scene, "hash_calculated_sha3_512", text="SHA3_512",
+            layout.prop(scene, "hash_calculated_sha3_512", text=prefix+"SHA3_512",
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_sha3_512 else "NONE")
         if scene.show_hash_blake2b:
-            layout.prop(scene, "hash_calculated_blake2b", text="Blake2b",
+            layout.prop(scene, "hash_calculated_blake2b", text=prefix+"Blake2b",
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_blake2b else "NONE")
         if scene.show_hash_blake2s:
-            layout.prop(scene, "hash_calculated_blake2s", text="Blake2s",
+            layout.prop(scene, "hash_calculated_blake2s", text=prefix+"Blake2s",
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_blake2s else "NONE")
 #        if scene.show_hash_shake_128:
-#            layout.prop(scene, "hash_calculated_shake_128", text="Shake_128",
+#            layout.prop(scene, "hash_calculated_shake_128", text=prefix+"Shake_128",
 #                        icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_shake_128 else "NONE")
 #        if scene.show_hash_shake_256:
-#            layout.prop(scene, "hash_calculated_shake_256", text="Shake_256",
+#            layout.prop(scene, "hash_calculated_shake_256", text=prefix+"Shake_256",
 #                        icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_shake_256 else "NONE")
         if scene.show_hash_crc32:
             layout.prop(scene, "hash_calculated_crc32", text="CRC32",
@@ -152,7 +161,7 @@ class HASH_PT_CustomPanel(bpy.types.Panel):
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_adler32 else "NONE")
 
 from hashlib import md5, sha1, sha224, sha256, sha384, sha512, sha3_224, sha3_256, sha3_384, sha3_512, blake2b, blake2s #, shake_128, shake_256
-# import hmac
+import hmac
 from binascii import crc32
 from zlib import adler32
 from base64 import b64encode
@@ -162,25 +171,29 @@ def hex_to_format(self, hex_val):
            hex_val.upper() if self.hash_digest_format == "UPPERCASE" else \
            b64encode(bytes.fromhex(hex_val)).decode('utf-8')
 
+def hash_calc(self, bin, func):
+    return func(bin).hexdigest() if not self.hash_is_hmac else \
+           hmac.new(self.hash_hmac_salt.encode(), bin, func).hexdigest()
+
 def hash_update(self, context):
     if self.hash_input_type == "TEXT":
         bin = self.hash_base_text.encode()
     else:
         bin = open(bpy.path.abspath(self.hash_base_file), "rb").read()
-    self["hash_calculated_md5"] = hex_to_format(self, md5(bin).hexdigest())
-    self["hash_calculated_sha1"] = hex_to_format(self, sha1(bin).hexdigest())
-    self["hash_calculated_sha224"] = hex_to_format(self, sha224(bin).hexdigest())
-    self["hash_calculated_sha256"] = hex_to_format(self, sha256(bin).hexdigest())
-    self["hash_calculated_sha384"] = hex_to_format(self, sha384(bin).hexdigest())
-    self["hash_calculated_sha512"] = hex_to_format(self, sha512(bin).hexdigest())
-    self["hash_calculated_sha3_224"] = hex_to_format(self, sha3_224(bin).hexdigest())
-    self["hash_calculated_sha3_256"] = hex_to_format(self, sha3_256(bin).hexdigest())
-    self["hash_calculated_sha3_384"] = hex_to_format(self, sha3_384(bin).hexdigest())
-    self["hash_calculated_sha3_512"] = hex_to_format(self, sha3_512(bin).hexdigest())
-    self["hash_calculated_blake2b"] = hex_to_format(self, blake2b(bin).hexdigest())
-    self["hash_calculated_blake2s"] = hex_to_format(self, blake2s(bin).hexdigest())
-#    self["hash_calculated_shake_128"] = hex_to_format(self, shake_128(bin).hexdigest()) # length?
-#    self["hash_calculated_shake_256"] = hex_to_format(self, shake_256(bin).hexdigest()) # length?
+    self["hash_calculated_md5"] = hex_to_format(self, hash_calc(self, bin, md5))
+    self["hash_calculated_sha1"] = hex_to_format(self, hash_calc(self, bin, sha1))
+    self["hash_calculated_sha224"] = hex_to_format(self, hash_calc(self, bin, sha224))
+    self["hash_calculated_sha256"] = hex_to_format(self, hash_calc(self, bin, sha256))
+    self["hash_calculated_sha384"] = hex_to_format(self, hash_calc(self, bin, sha384))
+    self["hash_calculated_sha512"] = hex_to_format(self, hash_calc(self, bin, sha512))
+    self["hash_calculated_sha3_224"] = hex_to_format(self, hash_calc(self, bin, sha3_224))
+    self["hash_calculated_sha3_256"] = hex_to_format(self, hash_calc(self, bin, sha3_256))
+    self["hash_calculated_sha3_384"] = hex_to_format(self, hash_calc(self, bin, sha3_384))
+    self["hash_calculated_sha3_512"] = hex_to_format(self, hash_calc(self, bin, sha3_512))
+    self["hash_calculated_blake2b"] = hex_to_format(self, hash_calc(self, bin, blake2b))
+    self["hash_calculated_blake2s"] = hex_to_format(self, hash_calc(self, bin, blake2s))
+#    self["hash_calculated_shake_128"] = hex_to_format(self, hash_calc(self, bin, shake_128)) # length?
+#    self["hash_calculated_shake_256"] = hex_to_format(self, hash_calc(self, bin, shake_256)) # length?
     self["hash_calculated_crc32"] = hex_to_format(self, format(crc32(bin), "08x"))
     self["hash_calculated_adler32"] = hex_to_format(self, format(adler32(bin), "08x"))
 
@@ -209,6 +222,13 @@ def init_props():
 
     scene.hash_check_text = StringProperty(name="Hash for Checking", 
                                           default="")
+
+    scene.hash_is_hmac = BoolProperty(name="Is HMAC", 
+                                      default=False,
+                                      update=hash_update)
+    scene.hash_hmac_salt = StringProperty(name="Salt", 
+                                          default="",
+                                          update=hash_update)
 
     # hashlib.algorithms_guaranteed
     scene.hash_calculated_md5 = StringProperty(name="Calculated MD5", 
@@ -343,6 +363,8 @@ def clear_props():
     del scene.hash_input_type
     del scene.hash_base_text
     del scene.hash_check_text
+    del scene.hash_is_hmac
+    del scene.hash_hmac_salt
 
     del scene.hash_calculated_md5
     del scene.hash_calculated_sha1
