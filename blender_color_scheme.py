@@ -18,7 +18,7 @@
 #
 # Color Scheme Addon for Blender
 #
-# Copyright (C) 2021 Toshimitsu Kimura <lovesyao@gmail.com>
+# Copyright (C) 2022 Toshimitsu Kimura <lovesyao@gmail.com>
 # Copyright (C) 2005 Jonathon Jongsma
 #
 # Note: The code is based on Agave 0.4.7
