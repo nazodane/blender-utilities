@@ -21,12 +21,13 @@
 # Copyright (C) 2022 Toshimitsu Kimura <lovesyao@gmail.com>
 #
 # Note: The UI is heavily inspired from GtkHash
-# TODO: HMAC support, File support, digest format
+# TODO: HMAC support, File support
 
 import bpy
 from bpy.props import (
     BoolProperty,
     StringProperty,
+    EnumProperty,
 )
 
 bl_info = {
@@ -66,6 +67,8 @@ class HASH_MT_Default(bpy.types.Menu):
 #        layout.prop(scene, "show_hash_shake_256")
         layout.prop(scene, "show_hash_crc32")
         layout.prop(scene, "show_hash_adler32")
+
+        layout.prop(scene, "hash_digest_format")
 
 class HASH_PT_CustomPanel(bpy.types.Panel):
 
@@ -142,28 +145,34 @@ class HASH_PT_CustomPanel(bpy.types.Panel):
                         icon="CHECKMARK" if scene.hash_check_text == scene.hash_calculated_adler32 else "NONE")
 
 from hashlib import md5, sha1, sha224, sha256, sha384, sha512, sha3_224, sha3_256, sha3_384, sha3_512, blake2b, blake2s #, shake_128, shake_256
-import hmac
+# import hmac
 from binascii import crc32
 from zlib import adler32
+from base64 import b64encode
+
+def hex_to_format(self, hex_val):
+    return hex_val if self.hash_digest_format == "LOWERCASE" else \
+           hex_val.upper() if self.hash_digest_format == "UPPERCASE" else \
+           b64encode(bytes.fromhex(hex_val)).decode('utf-8')
 
 def hash_update(self, context):
     bin = self.hash_base_text.encode()
-    self["hash_calculated_md5"] = md5(bin).hexdigest()
-    self["hash_calculated_sha1"] = sha1(bin).hexdigest()
-    self["hash_calculated_sha224"] = sha224(bin).hexdigest()
-    self["hash_calculated_sha256"] = sha256(bin).hexdigest()
-    self["hash_calculated_sha384"] = sha384(bin).hexdigest()
-    self["hash_calculated_sha512"] = sha512(bin).hexdigest()
-    self["hash_calculated_sha3_224"] = sha3_224(bin).hexdigest()
-    self["hash_calculated_sha3_256"] = sha3_256(bin).hexdigest()
-    self["hash_calculated_sha3_384"] = sha3_384(bin).hexdigest()
-    self["hash_calculated_sha3_512"] = sha3_512(bin).hexdigest()
-    self["hash_calculated_blake2b"] = blake2b(bin).hexdigest()
-    self["hash_calculated_blake2s"] = blake2s(bin).hexdigest()
-#    self["hash_calculated_shake_128"] = shake_128(bin).hexdigest() # length?
-#    self["hash_calculated_shake_256"] = shake_256(bin).hexdigest() # length?
-    self["hash_calculated_crc32"] = format(crc32(bin), "08x")
-    self["hash_calculated_adler32"] = format(adler32(bin), "08x")
+    self["hash_calculated_md5"] = hex_to_format(self, md5(bin).hexdigest())
+    self["hash_calculated_sha1"] = hex_to_format(self, sha1(bin).hexdigest())
+    self["hash_calculated_sha224"] = hex_to_format(self, sha224(bin).hexdigest())
+    self["hash_calculated_sha256"] = hex_to_format(self, sha256(bin).hexdigest())
+    self["hash_calculated_sha384"] = hex_to_format(self, sha384(bin).hexdigest())
+    self["hash_calculated_sha512"] = hex_to_format(self, sha512(bin).hexdigest())
+    self["hash_calculated_sha3_224"] = hex_to_format(self, sha3_224(bin).hexdigest())
+    self["hash_calculated_sha3_256"] = hex_to_format(self, sha3_256(bin).hexdigest())
+    self["hash_calculated_sha3_384"] = hex_to_format(self, sha3_384(bin).hexdigest())
+    self["hash_calculated_sha3_512"] = hex_to_format(self, sha3_512(bin).hexdigest())
+    self["hash_calculated_blake2b"] = hex_to_format(self, blake2b(bin).hexdigest())
+    self["hash_calculated_blake2s"] = hex_to_format(self, blake2s(bin).hexdigest())
+#    self["hash_calculated_shake_128"] = hex_to_format(self, shake_128(bin).hexdigest()) # length?
+#    self["hash_calculated_shake_256"] = hex_to_format(self, shake_256(bin).hexdigest()) # length?
+    self["hash_calculated_crc32"] = hex_to_format(self, format(crc32(bin), "08x"))
+    self["hash_calculated_adler32"] = hex_to_format(self, format(adler32(bin), "08x"))
 
 def init_props():
     scene = bpy.types.Scene
@@ -290,6 +299,19 @@ def init_props():
     scene.show_hash_adler32 = BoolProperty(name="Show Adler32 Hash", 
                                         default=False)
 
+    scene.hash_digest_format = EnumProperty(
+        name="Digest Format",
+        description="The string format of the calculated digest",
+        items=[
+            ('LOWERCASE', "Lowercase Hexadecimal", "Lowercase Hexadecimal"),
+            ('UPPERCASE', "Uppercase Hexadecimal", "Uppercase Hexadecimal"),
+            ('BASE64', "Base64", "Base64"),
+        ],
+        default='LOWERCASE',
+        update=hash_update
+    )
+
+
 def clear_props():
     scene = bpy.types.Scene
     del scene.hash_base_text
@@ -328,6 +350,8 @@ def clear_props():
 #    del scene.show_hash_shake_256
     del scene.show_hash_crc32
     del scene.show_hash_adler32
+
+    del scene.hash_digest_format
 
 classes = [
     HASH_PT_CustomPanel,
