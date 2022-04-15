@@ -21,7 +21,7 @@
 # Copyright (C) 2022 Toshimitsu Kimura <lovesyao@gmail.com>
 #
 # Note: The UI is heavily inspired from GtkHash
-# TODO: HMAC support, File support
+# TODO: HMAC support
 
 import bpy
 from bpy.props import (
@@ -93,8 +93,14 @@ class HASH_PT_CustomPanel(bpy.types.Panel):
 
         layout.menu(HASH_MT_Default.bl_idname)
 
-        layout.prop(scene, "hash_base_text", text="Text")
+        layout.label(text="Input:")
+        layout.prop(scene, "hash_input_type")
+        if scene.hash_input_type == "TEXT":
+            layout.prop(scene, "hash_base_text", text="Text")
+        else:
+            layout.prop(scene, "hash_base_file", text="File")
         layout.prop(scene, "hash_check_text", text="Check")
+
         layout.label(text="Calculated:")
         if scene.show_hash_md5:
             layout.prop(scene, "hash_calculated_md5", text="MD5",
@@ -157,7 +163,10 @@ def hex_to_format(self, hex_val):
            b64encode(bytes.fromhex(hex_val)).decode('utf-8')
 
 def hash_update(self, context):
-    bin = self.hash_base_text.encode()
+    if self.hash_input_type == "TEXT":
+        bin = self.hash_base_text.encode()
+    else:
+        bin = open(bpy.path.abspath(self.hash_base_file), "rb").read()
     self["hash_calculated_md5"] = hex_to_format(self, md5(bin).hexdigest())
     self["hash_calculated_sha1"] = hex_to_format(self, sha1(bin).hexdigest())
     self["hash_calculated_sha224"] = hex_to_format(self, sha224(bin).hexdigest())
@@ -178,7 +187,23 @@ def hash_update(self, context):
 def init_props():
     scene = bpy.types.Scene
 
+    scene.hash_input_type = EnumProperty(
+        name="Input Type",
+        description="The type of input for hashing",
+        items=[
+            ('FILE', "File", "File"),
+            ('TEXT', "Text", "Text"),
+#            ('FILELIST', "File List", "File List"),
+        ],
+        default='FILE',
+        update=hash_update
+    )
+
     scene.hash_base_text = StringProperty(name="Text for Hashing", 
+                                          default="",
+                                          update=hash_update)
+    scene.hash_base_file = StringProperty(name="File for Hashing",
+                                          subtype="FILE_PATH",
                                           default="",
                                           update=hash_update)
 
@@ -315,6 +340,7 @@ def init_props():
 
 def clear_props():
     scene = bpy.types.Scene
+    del scene.hash_input_type
     del scene.hash_base_text
     del scene.hash_check_text
 
