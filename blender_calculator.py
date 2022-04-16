@@ -84,6 +84,18 @@ from random import random
 import re
 def calc_update(self, context):
     exp = self.calc_exp
+
+    exp = exp.replace("/", "÷") \
+             .replace("**", "^") \
+             .replace("×*", "^") \
+             .replace("*", "×") \
+             .replace("-", "−") \
+             .replace("<<", "«") \
+             .replace(">>", "»") \
+             .replace(",", ".")
+    if exp != self.calc_exp:
+        self.calc_exp = exp
+
     if exp.find("__") >= 0 or exp == "": # dangerous
         return
     if (not self.calc_is_live) and exp[-1] != "=":
@@ -117,24 +129,26 @@ def calc_update(self, context):
                          .replace("∨", "|") \
                          .replace("⊻", "^") \
                          .replace("⁻¹", "**-1") \
-                         .replace("π", "___pi")
+                         .replace("²", "**2") \
+                         .replace("π", "___pi") \
+                         .replace("%", "*0.01")
 
-    exp_inner = re.sub("([0-9\s]+)and([0-9\s]+)", "\\1&\\2", exp_inner) # 12 and 5 = 4
-    exp_inner = re.sub("([0-9\s]+)or([0-9\s]+)", "\\1|\\2", exp_inner) # 12 and 5 = 13
-    exp_inner = re.sub("([0-9\s]+)xor([0-9\s]+)", "\\1^\\2", exp_inner)
-    exp_inner = re.sub("([0-9\s]+)mod([0-9\s]+)", "\\1%\\2", exp_inner)
+    exp_inner = re.sub("([0-9\\.\s]+)and([0-9\\.\s]+)", "\\1&\\2", exp_inner) # 12 and 5 = 4
+    exp_inner = re.sub("([0-9\\.\s]+)or([0-9\\.\s]+)", "\\1|\\2", exp_inner) # 12 and 5 = 13
+    exp_inner = re.sub("([0-9\\.\s]+)xor([0-9\\.\s]+)", "\\1^\\2", exp_inner)
+    exp_inner = re.sub("([0-9\\.\s]+)mod([0-9\\.\s]+)", "\\1%\\2", exp_inner)
     # TODO: mod with hexadecimal mode
 
-    exp_inner = re.sub("([0-9]+)\s*([a-zA-Z_]+)", "\\1 * \\2", exp_inner) # 11e -> 11 * e
-    exp_inner = re.sub("([a-zA-Z_]+)\s*([0-9]+|\s+[a-zA-Z_]+)", "\\1(\\2)", exp_inner) # frac11 -> frac(11)
+    exp_inner = re.sub("([0-9\\.]+)\s*([a-zA-Z_]+)", "\\1 * \\2", exp_inner) # 11e -> 11 * e
+    exp_inner = re.sub("([a-zA-Z_]+)\s*([0-9\\.]+|\s+[a-zA-Z_]+)", "\\1(\\2)", exp_inner) # frac11 -> frac(11)
 
 # a=2
 # sqrt2a = 2.8284
 
-    exp_inner = re.sub("([0-9]+|[a-zA-Z_]+)\s*!", " factorial(\\1)", exp_inner)
+    exp_inner = re.sub("([0-9\\.]+|[a-zA-Z_]+)\s*!", " factorial(\\1)", exp_inner)
 
     # Complex Number translation
-    exp_inner = re.sub("(([^a-zA-Z_0-9]+|^)[0-9]+) \\* i([^a-zA-Z_]+|$)", "\\1j\\3", exp_inner)
+    exp_inner = re.sub("(([^a-zA-Z_0-9\\.]+|^)[0-9\\.]+) \\* i([^a-zA-Z_]+|$)", "\\1j\\3", exp_inner)
 
     dict |= {"sqrt": math.sqrt,
              "factorial": lambda x: math.gamma(x + 1), # internal
@@ -199,7 +213,7 @@ class CALC_OT_InputBase():
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
         scene = context.scene
-        if self.c in ["sqrt", "factorial", "abs", "log", "ln"]:
+        if self.c in ["sqrt", "abs", "log", "ln"]:
             scene.calc_exp = self.c + "(" + scene.calc_exp + ")"
         else:
             scene.calc_exp += self.c
@@ -227,14 +241,14 @@ CALC_OT_Input_9 = CALC_new_input_class("9")
 CALC_OT_Input_dot = CALC_new_input_class(".", "dot")
 CALC_OT_Input_percent = CALC_new_input_class("%", "percent")
 CALC_OT_Input_plus = CALC_new_input_class("+", "plus")
-CALC_OT_Input_minus = CALC_new_input_class("-", "minus")
-CALC_OT_Input_mul = CALC_new_input_class("*", "mul")
-CALC_OT_Input_div = CALC_new_input_class("/", "div")
+CALC_OT_Input_minus = CALC_new_input_class("−", "minus")
+CALC_OT_Input_mul = CALC_new_input_class("×", "mul")
+CALC_OT_Input_div = CALC_new_input_class("÷", "div")
 CALC_OT_Input_lp = CALC_new_input_class("(", "lp")
 CALC_OT_Input_rp = CALC_new_input_class(")", "rp")
-CALC_OT_Input_sq = CALC_new_input_class("**2", "sq")
-CALC_OT_Input_sqrt = CALC_new_input_class("sqrt")
-CALC_OT_Input_factorial = CALC_new_input_class("factorial")
+CALC_OT_Input_sq = CALC_new_input_class("²", "sq")
+CALC_OT_Input_sqrt = CALC_new_input_class("√", "sqrt")
+CALC_OT_Input_factorial = CALC_new_input_class("!", "factorial")
 CALC_OT_Input_abs = CALC_new_input_class("abs")
 CALC_OT_Input_log = CALC_new_input_class("log")
 CALC_OT_Input_ln = CALC_new_input_class("ln")
@@ -283,21 +297,21 @@ class CALC_PT_CustomPanel(bpy.types.Panel):
         row.operator(CALC_OT_Input_7.bl_idname, text="7")
         row.operator(CALC_OT_Input_8.bl_idname, text="8")
         row.operator(CALC_OT_Input_9.bl_idname, text="9")
-        row.operator(CALC_OT_Input_div.bl_idname, text="/")
+        row.operator(CALC_OT_Input_div.bl_idname, text="÷")
         row.operator(CALC_OT_Input_log.bl_idname, text="log")
         row.operator(CALC_OT_Input_ln.bl_idname, text="ln")
         row = layout.row(align=True)
         row.operator(CALC_OT_Input_4.bl_idname, text="4")
         row.operator(CALC_OT_Input_5.bl_idname, text="5")
         row.operator(CALC_OT_Input_6.bl_idname, text="6")
-        row.operator(CALC_OT_Input_mul.bl_idname, text="*")
+        row.operator(CALC_OT_Input_mul.bl_idname, text="×")
         row.operator(CALC_OT_Input_lp.bl_idname, text="(")
         row.operator(CALC_OT_Input_rp.bl_idname, text=")")
         row = layout.row(align=True)
         row.operator(CALC_OT_Input_1.bl_idname, text="1")
         row.operator(CALC_OT_Input_2.bl_idname, text="2")
         row.operator(CALC_OT_Input_3.bl_idname, text="3")
-        row.operator(CALC_OT_Input_minus.bl_idname, text="-")
+        row.operator(CALC_OT_Input_minus.bl_idname, text="−")
         row.operator(CALC_OT_Input_sq.bl_idname, text="x²")
         row.operator(CALC_OT_Input_sqrt.bl_idname, text="√")
         row = layout.row(align=True)
