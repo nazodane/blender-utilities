@@ -77,7 +77,9 @@ class CALC_UL_HistList(bpy.types.UIList):
         row = layout.row()
 
 import math
+from math import nan
 import numpy as np
+import cmath
 from random import random
 import re
 def calc_update(self, context):
@@ -97,10 +99,48 @@ def calc_update(self, context):
             dict[i.name] = eval(i.val)
 
     dict |= {"sqrt": math.sqrt,
-             "factorial": lambda x: math.gamma(x + 1),
-             "fabs": math.fabs,
+             "√": math.sqrt,
+             "factorial": lambda x: math.gamma(x + 1), # internal
+             "abs": math.fabs,
              "log": np.log10,
              "ln": np.log,
+             "π": math.pi,
+             "e": math.e,
+             "re": lambda x: x.real,
+             "im": lambda x: x.imag,
+             "conj": np.conj,
+             "arg": lambda x: np.angle(x, deg=True),
+             "sin": lambda x: np.sin(np.deg2rad(x)), # TODO: complex number
+             "cos": lambda x: np.cos(np.deg2rad(x)), # TODO: complex number
+             "tan": lambda x: np.tan(np.deg2rad(x)), # TODO: complex number
+
+             "asin": lambda x: np.rad2deg(np.arcsin(x)), # TODO: complex number
+             "sin⁻¹": lambda x: np.rad2deg(np.arcsin(x)), # TODO: complex number
+             "acos": lambda x: np.rad2deg(np.arccos(x)), # TODO: complex number
+             "cos⁻¹": lambda x: np.rad2deg(np.arccos(x)), # TODO: complex number
+             "atan": lambda x: np.rad2deg(np.arctan(x)), # TODO: complex number
+             "tan⁻¹": lambda x: np.rad2deg(np.arctan(x)), # TODO: complex number
+
+             "sinh": np.sinh,
+             "cosh": np.cosh,
+             "tanh": np.tanh,
+             "asinh": np.arcsinh,
+             "sinh⁻¹": np.arcsinh,
+             "acosh": np.arccosh,
+             "cosh⁻¹": np.arccosh,
+             "atanh": np.arctanh,
+             "tanh⁻¹": np.arctanh,
+
+             "sgn": np.sign,
+             "round": np.round, # TODO: hmm... round(12.5) -> 12
+             "floor": np.floor,
+             "ceil": np.ceil,
+             "int": int,
+             "frac": lambda x: math.modf(x)[0],
+
+#             "ones": ,
+#             "twos": ,
+
              "_": eval(self.calc_hist[0].result) if len(self.calc_hist) else 0,
              "rand": random(),
             }
@@ -127,7 +167,7 @@ class CALC_OT_InputBase():
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
         scene = context.scene
-        if self.c in ["sqrt", "factorial", "fabs", "log", "ln"]:
+        if self.c in ["sqrt", "factorial", "abs", "log", "ln"]:
             scene.calc_exp = self.c + "(" + scene.calc_exp + ")"
         else:
             scene.calc_exp += self.c
@@ -163,7 +203,7 @@ CALC_OT_Input_rp = CALC_new_input_class(")", "rp")
 CALC_OT_Input_sq = CALC_new_input_class("**2", "sq")
 CALC_OT_Input_sqrt = CALC_new_input_class("sqrt")
 CALC_OT_Input_factorial = CALC_new_input_class("factorial")
-CALC_OT_Input_fabs = CALC_new_input_class("fabs")
+CALC_OT_Input_abs = CALC_new_input_class("abs")
 CALC_OT_Input_log = CALC_new_input_class("log")
 CALC_OT_Input_ln = CALC_new_input_class("ln")
 
@@ -234,7 +274,7 @@ class CALC_PT_CustomPanel(bpy.types.Panel):
         row.operator(CALC_OT_Input_percent.bl_idname, text="%")
         row.operator(CALC_OT_Input_plus.bl_idname, text="+")
         row.operator(CALC_OT_Input_factorial.bl_idname, text="x!")
-        row.operator(CALC_OT_Input_fabs.bl_idname, text="|x|")
+        row.operator(CALC_OT_Input_abs.bl_idname, text="|x|")
 
         row = layout.row()
         row.enabled = not scene.calc_is_live
@@ -302,7 +342,7 @@ classes = [
     CALC_OT_Input_sq,
     CALC_OT_Input_sqrt,
     CALC_OT_Input_factorial,
-    CALC_OT_Input_fabs,
+    CALC_OT_Input_abs,
     CALC_OT_Input_log,
     CALC_OT_Input_ln,
     CALC_OT_Input_equal,
