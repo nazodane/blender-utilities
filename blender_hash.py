@@ -75,6 +75,23 @@ translation_dict = {
         ("*", "Input:"): "入力:",
         ("*", "Calculated:"): "結果:",
         ("*", "Check"): "チェック",
+
+        ("*", "Calculated MD5 Hash"): "算出した MD5 ハッシュ",
+        ("*", "Calculated SHA1 Hash"): "算出した SHA1 ハッシュ",
+        ("*", "Calculated SHA224 Hash"): "算出した SHA224 ハッシュ",
+        ("*", "Calculated SHA256 Hash"): "算出した SHA256 ハッシュ",
+        ("*", "Calculated SHA384 Hash"): "算出した SHA384 ハッシュ",
+        ("*", "Calculated SHA512 Hash"): "算出した SHA512 ハッシュ",
+        ("*", "Calculated SHA3_224 Hash"): "算出した SHA3_224 ハッシュ",
+        ("*", "Calculated SHA3_256 Hash"): "算出した SHA3_256 ハッシュ",
+        ("*", "Calculated SHA3_384 Hash"): "算出した SHA3_384 ハッシュ",
+        ("*", "Calculated SHA3_512 Hash"): "算出した SHA3_512 ハッシュ",
+        ("*", "Calculated Blake2b Hash"): "算出した Blake2b ハッシュ",
+        ("*", "Calculated Blake2s Hash"): "算出した Blake2s ハッシュ",
+#        ("*", "Calculated Shake_128 Hash"): "算出した Shake_128 ハッシュ",
+#        ("*", "Calculated Shake_256 Hash"): "算出した Shake_256 ハッシュ",
+        ("*", "Calculated CRC32 Hash"): "算出した CRC32 ハッシュ",
+        ("*", "Calculated Adler32 Hash"): "算出した Adler32 ハッシュ",
     }
 }
 
@@ -281,82 +298,82 @@ def init_props():
                                           update=hash_update)
 
     # hashlib.algorithms_guaranteed
-    scene.hash_calculated_md5 = StringProperty(name="Calculated MD5", 
+    scene.hash_calculated_md5 = StringProperty(name="Calculated MD5 Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_md5"]
                                                     if "hash_calculated_md5" in t else "",
                                                 set=lambda t, v: None)
-    scene.hash_calculated_sha1 = StringProperty(name="Calculated SHA1", 
+    scene.hash_calculated_sha1 = StringProperty(name="Calculated SHA1 Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_sha1"]
                                                     if "hash_calculated_sha1" in t else "",
                                                 set=lambda t, v: None)
-    scene.hash_calculated_sha224 = StringProperty(name="Calculated SHA224", 
+    scene.hash_calculated_sha224 = StringProperty(name="Calculated SHA224 Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_sha224"]
                                                     if "hash_calculated_sha224" in t else "",
                                                 set=lambda t, v: None)
-    scene.hash_calculated_sha256 = StringProperty(name="Calculated SHA256", 
+    scene.hash_calculated_sha256 = StringProperty(name="Calculated SHA256 Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_sha256"]
                                                     if "hash_calculated_sha256" in t else "",
                                                 set=lambda t, v: None)
-    scene.hash_calculated_sha384 = StringProperty(name="Calculated SHA384", 
+    scene.hash_calculated_sha384 = StringProperty(name="Calculated SHA384 Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_sha384"]
                                                     if "hash_calculated_sha384" in t else "",
                                                 set=lambda t, v: None)
-    scene.hash_calculated_sha512 = StringProperty(name="Calculated SHA512", 
+    scene.hash_calculated_sha512 = StringProperty(name="Calculated SHA512 Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_sha512"]
                                                     if "hash_calculated_sha512" in t else "",
                                                 set=lambda t, v: None)
-    scene.hash_calculated_sha3_224 = StringProperty(name="Calculated SHA3_224", 
+    scene.hash_calculated_sha3_224 = StringProperty(name="Calculated SHA3_224 Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_sha3_224"]
                                                     if "hash_calculated_sha3_224" in t else "",
                                                 set=lambda t, v: None)
-    scene.hash_calculated_sha3_256 = StringProperty(name="Calculated SHA3_256", 
+    scene.hash_calculated_sha3_256 = StringProperty(name="Calculated SHA3_256 Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_sha3_256"]
                                                     if "hash_calculated_sha3_256" in t else "",
                                                 set=lambda t, v: None)
-    scene.hash_calculated_sha3_384 = StringProperty(name="Calculated SHA3_384", 
+    scene.hash_calculated_sha3_384 = StringProperty(name="Calculated SHA3_384 Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_sha3_384"]
                                                     if "hash_calculated_sha3_384" in t else "",
                                                 set=lambda t, v: None)
-    scene.hash_calculated_sha3_512 = StringProperty(name="Calculated SHA3_512", 
+    scene.hash_calculated_sha3_512 = StringProperty(name="Calculated SHA3_512 Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_sha3_512"]
                                                     if "hash_calculated_sha3_512" in t else "",
                                                 set=lambda t, v: None)
-    scene.hash_calculated_blake2b = StringProperty(name="Calculated Blake2b", 
+    scene.hash_calculated_blake2b = StringProperty(name="Calculated Blake2b Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_blake2b"]
                                                     if "hash_calculated_blake2b" in t else "",
                                                 set=lambda t, v: None)
-    scene.hash_calculated_blake2s = StringProperty(name="Calculated Blake2s", 
+    scene.hash_calculated_blake2s = StringProperty(name="Calculated Blake2s Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_blake2s"]
                                                     if "hash_calculated_blake2s" in t else "",
                                                 set=lambda t, v: None)
-#    scene.hash_calculated_shake_128 = StringProperty(name="Calculated Shake_128", 
+#    scene.hash_calculated_shake_128 = StringProperty(name="Calculated Shake_128 Hash", 
 #                                                default="", 
 #                                                get=lambda t: t["hash_calculated_shake_128"]
 #                                                    if "hash_calculated_shake_128" in t else "",
 #                                                set=lambda t, v: None)
-#    scene.hash_calculated_shake_256 = StringProperty(name="Calculated Shake_256", 
+#    scene.hash_calculated_shake_256 = StringProperty(name="Calculated Shake_256 Hash", 
 #                                                default="", 
 #                                                get=lambda t: t["hash_calculated_shake_256"]
 #                                                    if "hash_calculated_shake_256" in t else "",
 #                                                set=lambda t, v: None)
-    scene.hash_calculated_crc32 = StringProperty(name="Calculated CRC32", 
+    scene.hash_calculated_crc32 = StringProperty(name="Calculated CRC32 Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_crc32"]
                                                     if "hash_calculated_crc32" in t else "",
                                                 set=lambda t, v: None)
-    scene.hash_calculated_adler32 = StringProperty(name="Calculated Adler32", 
+    scene.hash_calculated_adler32 = StringProperty(name="Calculated Adler32 Hash", 
                                                 default="", 
                                                 get=lambda t: t["hash_calculated_adler32"]
                                                     if "hash_calculated_adler32" in t else "",
