@@ -96,6 +96,10 @@ import re
 def calc_update(self, context):
     exp = self.calc_exp
 
+    if not self.calc_is_inited:
+        update_rand(self)
+        self.calc_is_inited = True
+
     exp = exp.replace("/", "÷") \
              .replace("**", "^") \
              .replace("×*", "^") \
