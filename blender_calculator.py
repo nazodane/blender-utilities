@@ -65,6 +65,17 @@ translation_dict = {
     }
 }
 
+from random import random
+def update_rand(scene):
+    var = None
+    for i in scene.calc_vars:
+        if i.name == "rand":
+            var = i
+    if not var:
+        var = scene.calc_vars.add()
+    var.name = "rand"
+    var.val = str(random())
+
 class CALC_UL_HistList(bpy.types.UIList):
     use_filter_show: False
     def draw_item(self, context, layout, data, item, icon, active_data):
@@ -81,10 +92,13 @@ import math
 from math import nan
 import numpy as np
 import cmath
-from random import random
 import re
 def calc_update(self, context):
     exp = self.calc_exp
+
+    if not self.calc_is_inited: # TODO: not good...
+        update_rand(self)
+        self.calc_is_inited = True
 
     exp = exp.replace("/", "÷") \
              .replace("**", "^") \
@@ -96,6 +110,7 @@ def calc_update(self, context):
              .replace(",", ".")
     if exp != self.calc_exp:
         self.calc_exp = exp
+        return
 
     if exp.find("__") >= 0 or exp == "": # dangerous
         return
@@ -198,9 +213,6 @@ def calc_update(self, context):
 #             "ones": ,
 #             "twos": ,
 #             "not": ,
-
-             "_": eval(self.calc_hist[0].result.replace("i", "j")) if len(self.calc_hist) else 0,
-             "rand": random(),
             }
 
     try:
@@ -224,6 +236,18 @@ def calc_update(self, context):
         hist["exp"] = exp
         hist["result"] = res
         self.calc_hist.move(len(self.calc_hist)-1, 0)
+
+        var = None
+        for i in self.calc_vars:
+            if i.name == "_":
+                var = i
+        if not var:
+            var = self.calc_vars.add()
+        var.name = "_"
+        var.val = res
+
+        update_rand(self)
+
     except: pass
 
 class CALC_OT_InputBase():
@@ -319,6 +343,7 @@ class CALC_OT_HistClear(bpy.types.Operator):
         scene = context.scene
         scene.calc_hist.clear()
         scene.calc_vars.clear()
+        update_rand(scene)
         return {'FINISHED'}
 
 class CALC_UL_VariablesList(bpy.types.UIList):
@@ -341,7 +366,6 @@ class CALC_MT_Variables(bpy.types.Menu):
         layout = self.layout
         scene = context.scene
         layout.template_list("CALC_UL_VariablesList", "", scene, "calc_vars", scene, "active_calc_vars_index")
-        
 
 class CALC_PT_CustomPanel(bpy.types.Panel):
     bl_label = "Calculator"
@@ -431,7 +455,7 @@ class CALC_PT_CustomPanel(bpy.types.Panel):
             row.operator(CALC_OT_Input_5.bl_idname, text="5")
             row.operator(CALC_OT_Input_6.bl_idname, text="6")
             row.operator(CALC_OT_Input_mul.bl_idname, text="×")
-            row.menu(CALC_MT_Variables.bl_idname)
+            row.menu(CALC_MT_Variables.bl_idname, text="x")
             row.label(text="") # placeholder
             row.operator(CALC_OT_Input_inv.bl_idname, text="x⁻¹")
             row.operator(CALC_OT_Input_factorial.bl_idname, text="x!")
@@ -515,7 +539,10 @@ def init_props():
                                                    update=update_superscript)
     scene.calc_is_subscript_input = BoolProperty(name="Subscript Input",
                                                  default=False,
-                                                   update=update_subscript)
+                                                 update=update_subscript)
+
+    scene.calc_is_inited = BoolProperty(name="Is Calculator Inited",
+                                        default=False)
 
 
 def clear_props():
@@ -526,6 +553,7 @@ def clear_props():
     del scene.active_calc_vars_index
     del scene.calc_mode
     del scene.calc_is_live
+    del scene.calc_is_inited
 
 classes = [
     CALC_PT_CustomPanel,
