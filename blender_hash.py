@@ -44,6 +44,40 @@ bl_info = {
     "category": "System"
 }
 
+
+translation_dict = {
+    "en_US": {
+    },
+    "ja_JP": {
+        ("*", "Hash"): "ハッシュ",
+
+        ("*", "Show MD5 Hash"): "MD5 ハッシュを表示",
+        ("*", "Show SHA1 Hash"): "SHA1 ハッシュを表示",
+        ("*", "Show SHA224 Hash"): "SHA224 ハッシュを表示",
+        ("*", "Show SHA256 Hash"): "SHA256 ハッシュを表示",
+        ("*", "Show SHA384 Hash"): "SHA384 ハッシュを表示",
+        ("*", "Show SHA512 Hash"): "SHA512 ハッシュを表示",
+        ("*", "Show SHA3_224 Hash"): "SHA3_224 ハッシュを表示",
+        ("*", "Show SHA3_256 Hash"): "SHA3_256 ハッシュを表示",
+        ("*", "Show SHA3_384 Hash"): "SHA3_384 ハッシュを表示",
+        ("*", "Show SHA3_512 Hash"): "SHA3_512 ハッシュを表示",
+        ("*", "Show Blake2b Hash"): "Blake2b ハッシュを表示",
+        ("*", "Show Blake2s Hash"): "Blake2s ハッシュを表示",
+#        ("*", "Show Shake_128 Hash"): "Shake_128 ハッシュを表示",
+#        ("*", "Show Shake_256 Hash"): "Shake_256 ハッシュを表示",
+        ("*", "Show CRC32 Hash"): "CRC32 ハッシュを表示",
+        ("*", "Show Adler32 Hash"): "Adler32 ハッシュを表示",
+
+        ("*", "Digest Format"): "ダイジェスト形式",
+        ("*", "Lowercase Hexadecimal"): "小文字16進数",
+        ("*", "Uppercase Hexadecimal"): "大文字16進数",
+
+        ("*", "Input:"): "入力:",
+        ("*", "Calculated:"): "結果:",
+        ("*", "Check"): "チェック",
+    }
+}
+
 class HASH_MT_Default(bpy.types.Menu):
     bl_idname="HASH_MT_default"
     bl_label="Menu"
@@ -444,12 +478,17 @@ def register():
     for c in classes:
         bpy.utils.register_class(c)
     init_props()
-
+    try:
+        bpy.app.translations.register("blender_hash", translation_dict)
+    except: pass
 
 def unregister():
     clear_props()
     for c in classes:
         bpy.utils.unregister_class(c)
+    try:
+        bpy.app.translations.unregister("blender_hash")
+    except: pass
 
 if __name__ == "__main__":
     register()
