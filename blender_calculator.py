@@ -352,7 +352,7 @@ class CALC_UL_VariablesList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data):
         col = layout.column()
         row = col.row(align=True)
-        row.prop(item, "name", text="")
+        row.label(text=item.name)
         row.label(text="", icon="FORWARD")
         row.prop(item, "val", text="")
 
@@ -510,6 +510,10 @@ def update_subscript(self, context):
     if self.calc_is_subscript_input:
         self.calc_is_superscript_input = False
 
+def update_active_calc_vars_index(self, context):
+    self.calc_exp += self.calc_vars[self.active_calc_vars_index].name
+
+
 def init_props():
     scene = bpy.types.Scene
     scene.calc_exp = StringProperty(name="Expression for calculation",
@@ -518,7 +522,8 @@ def init_props():
     scene.active_calc_hist_index = IntProperty(name="Active calculation history index")
 
     scene.calc_vars = CollectionProperty(type=CALC_Variable_PropertiesGroup)
-    scene.active_calc_vars_index = IntProperty(name="Active calculation variables index")
+    scene.active_calc_vars_index = IntProperty(name="Active calculation variables index",
+                                               update=update_active_calc_vars_index)
 
     scene.calc_mode = EnumProperty(
         name="Calculator Mode",
