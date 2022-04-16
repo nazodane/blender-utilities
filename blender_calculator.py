@@ -262,6 +262,8 @@ class CALC_OT_InputBase():
                 scene.calc_exp = scene.calc_exp + self.c + " "
         elif self.c in "0123456789":
             if scene.calc_is_subscript_input:
+                while scene.calc_exp[-1] == " ":
+                    scene.calc_exp = scene.calc_exp[0:-1]
                 scene.calc_exp += "₀₁₂₃₄₅₆₇₈₉"[int(self.c[0])-int('0')]
             elif scene.calc_is_superscript_input:
                 scene.calc_exp += "⁰¹²³⁴⁵⁶⁷⁸⁹"[int(self.c[0])-int('0')]
