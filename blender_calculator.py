@@ -22,11 +22,13 @@
 #
 # Note: The UI is some or less inspired from GNOME Calculator
 
+
 import bpy
 from bpy.props import (
     BoolProperty,
     StringProperty,
     IntProperty,
+    EnumProperty,
     CollectionProperty,
 )
 
@@ -213,7 +215,8 @@ class CALC_OT_InputBase():
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
         scene = context.scene
-        if self.c in ["sqrt", "abs", "log", "ln"]:
+        if self.c in ["sqrt", "abs", "arg", "log", "ln", "re", "im", "conj",
+                      "sin", "cos", "tan", "sinh", "cosh", "tanh"]:
             scene.calc_exp = self.c + "(" + scene.calc_exp + ")"
         else:
             scene.calc_exp += self.c
@@ -244,16 +247,45 @@ CALC_OT_Input_plus = CALC_new_input_class("+", "plus")
 CALC_OT_Input_minus = CALC_new_input_class("−", "minus")
 CALC_OT_Input_mul = CALC_new_input_class("×", "mul")
 CALC_OT_Input_div = CALC_new_input_class("÷", "div")
+CALC_OT_Input_mod = CALC_new_input_class(" mod ", "mod")
 CALC_OT_Input_lp = CALC_new_input_class("(", "lp")
 CALC_OT_Input_rp = CALC_new_input_class(")", "rp")
 CALC_OT_Input_sq = CALC_new_input_class("²", "sq")
+CALC_OT_Input_inv = CALC_new_input_class("⁻¹", "inv")
+CALC_OT_Input_pow = CALC_new_input_class("^", "pow")
 CALC_OT_Input_sqrt = CALC_new_input_class("√", "sqrt")
 CALC_OT_Input_factorial = CALC_new_input_class("!", "factorial")
+CALC_OT_Input_imag = CALC_new_input_class("i", "imag")
 CALC_OT_Input_abs = CALC_new_input_class("abs")
+CALC_OT_Input_arg = CALC_new_input_class("arg")
 CALC_OT_Input_log = CALC_new_input_class("log")
 CALC_OT_Input_ln = CALC_new_input_class("ln")
+CALC_OT_Input_re = CALC_new_input_class("re")
+CALC_OT_Input_im = CALC_new_input_class("im")
+CALC_OT_Input_conj = CALC_new_input_class("conj")
+CALC_OT_Input_sin = CALC_new_input_class("sin")
+CALC_OT_Input_cos = CALC_new_input_class("cos")
+CALC_OT_Input_tan = CALC_new_input_class("tan")
+CALC_OT_Input_sinh = CALC_new_input_class("sinh")
+CALC_OT_Input_cosh = CALC_new_input_class("cosh")
+CALC_OT_Input_tanh = CALC_new_input_class("tanh")
+CALC_OT_Input_pi = CALC_new_input_class("π", "pi")
+CALC_OT_Input_e = CALC_new_input_class("e")
+CALC_OT_Input_sexp = CALC_new_input_class("×10^", "sexp")
 
 CALC_OT_Input_equal = CALC_new_input_class("=", "equal")
+
+
+class CALC_OT_ExpClear(bpy.types.Operator):
+    bl_idname = "calc.expclear"
+    bl_label = "Clear Expression"
+    bl_description = "Make the expression text filed to empty"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        scene = context.scene
+        scene.calc_exp = ""
+        return {'FINISHED'}
 
 class CALC_OT_HistClear(bpy.types.Operator):
     bl_idname = "calc.histclear"
@@ -291,40 +323,100 @@ class CALC_PT_CustomPanel(bpy.types.Panel):
         row.operator(CALC_OT_HistClear.bl_idname, text="", icon="X")
         layout.template_list("CALC_UL_HistList", "", scene, "calc_hist", scene, "active_calc_hist_index")
 
-        layout.prop(scene, "calc_is_live")
-
-        row = layout.row(align=True)
-        row.operator(CALC_OT_Input_7.bl_idname, text="7")
-        row.operator(CALC_OT_Input_8.bl_idname, text="8")
-        row.operator(CALC_OT_Input_9.bl_idname, text="9")
-        row.operator(CALC_OT_Input_div.bl_idname, text="÷")
-        row.operator(CALC_OT_Input_log.bl_idname, text="log")
-        row.operator(CALC_OT_Input_ln.bl_idname, text="ln")
-        row = layout.row(align=True)
-        row.operator(CALC_OT_Input_4.bl_idname, text="4")
-        row.operator(CALC_OT_Input_5.bl_idname, text="5")
-        row.operator(CALC_OT_Input_6.bl_idname, text="6")
-        row.operator(CALC_OT_Input_mul.bl_idname, text="×")
-        row.operator(CALC_OT_Input_lp.bl_idname, text="(")
-        row.operator(CALC_OT_Input_rp.bl_idname, text=")")
-        row = layout.row(align=True)
-        row.operator(CALC_OT_Input_1.bl_idname, text="1")
-        row.operator(CALC_OT_Input_2.bl_idname, text="2")
-        row.operator(CALC_OT_Input_3.bl_idname, text="3")
-        row.operator(CALC_OT_Input_minus.bl_idname, text="−")
-        row.operator(CALC_OT_Input_sq.bl_idname, text="x²")
-        row.operator(CALC_OT_Input_sqrt.bl_idname, text="√")
-        row = layout.row(align=True)
-        row.operator(CALC_OT_Input_0.bl_idname, text="0")
-        row.operator(CALC_OT_Input_dot.bl_idname, text=".")
-        row.operator(CALC_OT_Input_percent.bl_idname, text="%")
-        row.operator(CALC_OT_Input_plus.bl_idname, text="+")
-        row.operator(CALC_OT_Input_factorial.bl_idname, text="x!")
-        row.operator(CALC_OT_Input_abs.bl_idname, text="|x|")
-
         row = layout.row()
-        row.enabled = not scene.calc_is_live
-        row.operator(CALC_OT_Input_equal.bl_idname, text="=")
+        row.prop(scene, "calc_mode", text="Mode")
+        row.prop(scene, "calc_is_live")
+
+        if scene.calc_mode == "BASIC":
+            row = layout.row(align=True)
+            row.operator(CALC_OT_Input_7.bl_idname, text="7")
+            row.operator(CALC_OT_Input_8.bl_idname, text="8")
+            row.operator(CALC_OT_Input_9.bl_idname, text="9")
+            row.operator(CALC_OT_Input_div.bl_idname, text="÷")
+            row.operator("ed.undo", text="Undo")
+            row.operator(CALC_OT_ExpClear.bl_idname, text="C")
+            row = layout.row(align=True)
+            row.operator(CALC_OT_Input_4.bl_idname, text="4")
+            row.operator(CALC_OT_Input_5.bl_idname, text="5")
+            row.operator(CALC_OT_Input_6.bl_idname, text="6")
+            row.operator(CALC_OT_Input_mul.bl_idname, text="×")
+            row.operator(CALC_OT_Input_lp.bl_idname, text="(")
+            row.operator(CALC_OT_Input_rp.bl_idname, text=")")
+            row = layout.row(align=True)
+            row.operator(CALC_OT_Input_1.bl_idname, text="1")
+            row.operator(CALC_OT_Input_2.bl_idname, text="2")
+            row.operator(CALC_OT_Input_3.bl_idname, text="3")
+            row.operator(CALC_OT_Input_minus.bl_idname, text="−")
+            row.operator(CALC_OT_Input_sq.bl_idname, text="x²")
+            row.operator(CALC_OT_Input_sqrt.bl_idname, text="√")
+            row = layout.row(align=True)
+            row.operator(CALC_OT_Input_0.bl_idname, text="0")
+            row.operator(CALC_OT_Input_dot.bl_idname, text=".")
+            row.operator(CALC_OT_Input_percent.bl_idname, text="%")
+            row.operator(CALC_OT_Input_plus.bl_idname, text="+")
+
+            row.label(text="") # placeholder
+            col = row.column()
+            col.enabled = not scene.calc_is_live
+            col.operator(CALC_OT_Input_equal.bl_idname, text="=")
+        elif scene.calc_mode == "ADVANCED":
+            row = layout.row(align=True)
+            row.label(text="") # placeholder
+            row.label(text="") # placeholder
+            row.operator(CALC_OT_Input_sexp.bl_idname, text="×10ʸ")
+            row.operator(CALC_OT_Input_mod.bl_idname, text="mod")
+            row.operator("ed.undo", text="Undo")
+            row.operator(CALC_OT_ExpClear.bl_idname, text="C")
+            row.label(text="") # placeholder
+            row.operator(CALC_OT_Input_cos.bl_idname, text="cos")
+            row.operator(CALC_OT_Input_sin.bl_idname, text="sin")
+            row.operator(CALC_OT_Input_tan.bl_idname, text="tan")
+            row = layout.row(align=True)
+            row.operator(CALC_OT_Input_7.bl_idname, text="7")
+            row.operator(CALC_OT_Input_8.bl_idname, text="8")
+            row.operator(CALC_OT_Input_9.bl_idname, text="9")
+            row.operator(CALC_OT_Input_div.bl_idname, text="÷")
+            row.operator(CALC_OT_Input_lp.bl_idname, text="(")
+            row.operator(CALC_OT_Input_rp.bl_idname, text=")")
+            row.label(text="") # placeholder
+            row.operator(CALC_OT_Input_sinh.bl_idname, text="sinh")
+            row.operator(CALC_OT_Input_cosh.bl_idname, text="cosh")
+            row.operator(CALC_OT_Input_tanh.bl_idname, text="tanh")
+            row = layout.row(align=True)
+            row.operator(CALC_OT_Input_4.bl_idname, text="4")
+            row.operator(CALC_OT_Input_5.bl_idname, text="5")
+            row.operator(CALC_OT_Input_6.bl_idname, text="6")
+            row.operator(CALC_OT_Input_mul.bl_idname, text="×")
+            row.label(text="") # placeholder
+            row.label(text="") # placeholder
+            row.operator(CALC_OT_Input_inv.bl_idname, text="x⁻¹")
+            row.operator(CALC_OT_Input_factorial.bl_idname, text="x!")
+            row.operator(CALC_OT_Input_abs.bl_idname, text="|x|")
+            row.operator(CALC_OT_Input_arg.bl_idname, text="Arg")
+            row = layout.row(align=True)
+            row.operator(CALC_OT_Input_1.bl_idname, text="1")
+            row.operator(CALC_OT_Input_2.bl_idname, text="2")
+            row.operator(CALC_OT_Input_3.bl_idname, text="3")
+            row.operator(CALC_OT_Input_minus.bl_idname, text="−")
+            row.operator(CALC_OT_Input_pi.bl_idname, text="π")
+            row.operator(CALC_OT_Input_e.bl_idname, text="e")
+            row.operator(CALC_OT_Input_pow.bl_idname, text="xʸ")
+            row.operator(CALC_OT_Input_sqrt.bl_idname, text="√")
+            row.operator(CALC_OT_Input_log.bl_idname, text="log")
+            row.operator(CALC_OT_Input_ln.bl_idname, text="ln")
+            row = layout.row(align=True)
+            row.operator(CALC_OT_Input_0.bl_idname, text="0")
+            row.operator(CALC_OT_Input_dot.bl_idname, text=".")
+            row.operator(CALC_OT_Input_imag.bl_idname, text="i")
+            row.operator(CALC_OT_Input_plus.bl_idname, text="+")
+            col = row.column()
+            col.enabled = not scene.calc_is_live
+            col.operator(CALC_OT_Input_equal.bl_idname, text="=")
+            row.label(text="") # placeholder
+            row.operator(CALC_OT_Input_re.bl_idname, text="Re")
+            row.operator(CALC_OT_Input_im.bl_idname, text="Im")
+            row.operator(CALC_OT_Input_conj.bl_idname, text="conj")
+            row.label(text="") # placeholder
 
 
 class CALC_Hist_PropertiesGroup(bpy.types.PropertyGroup):
@@ -350,6 +442,16 @@ def init_props():
 
     scene.calc_vars = CollectionProperty(type=CALC_Variable_PropertiesGroup)
 
+    scene.calc_mode = EnumProperty(
+        name="Calculator Mode",
+        description="The mode of calculator",
+        items=[
+            ('BASIC', "Basic Mode", "Basic Mode"),
+            ('ADVANCED', "Advanced Mode", "Advanced Mode"),
+        ],
+        default='BASIC'
+    )
+
     scene.calc_is_live = BoolProperty(name="Live Calculation",
                                       description="If you checked this, the valid expression will evaluate immediately. "+ \
                                                    "If not, the evaluation is delayed to the input of '='",
@@ -359,6 +461,7 @@ def clear_props():
     del calc_exp
     del scene.calc_hist
     del scene.active_calc_hist_index
+    del scene.calc_mode
     del scene.calc_is_live
 
 classes = [
@@ -367,6 +470,7 @@ classes = [
     CALC_Hist_PropertiesGroup,
     CALC_UL_HistList,
     CALC_Variable_PropertiesGroup,
+    CALC_OT_ExpClear,
     CALC_OT_Input_0,
     CALC_OT_Input_1,
     CALC_OT_Input_2,
@@ -383,14 +487,31 @@ classes = [
     CALC_OT_Input_minus,
     CALC_OT_Input_mul,
     CALC_OT_Input_div,
+    CALC_OT_Input_mod,
     CALC_OT_Input_lp,
     CALC_OT_Input_rp,
     CALC_OT_Input_sq,
+    CALC_OT_Input_inv,
+    CALC_OT_Input_pow,
     CALC_OT_Input_sqrt,
     CALC_OT_Input_factorial,
+    CALC_OT_Input_imag,
     CALC_OT_Input_abs,
+    CALC_OT_Input_arg,
     CALC_OT_Input_log,
     CALC_OT_Input_ln,
+    CALC_OT_Input_re,
+    CALC_OT_Input_im,
+    CALC_OT_Input_conj,
+    CALC_OT_Input_sin,
+    CALC_OT_Input_cos,
+    CALC_OT_Input_tan,
+    CALC_OT_Input_sinh,
+    CALC_OT_Input_cosh,
+    CALC_OT_Input_tanh,
+    CALC_OT_Input_pi,
+    CALC_OT_Input_e,
+    CALC_OT_Input_sexp,
     CALC_OT_Input_equal,
 ]
 
