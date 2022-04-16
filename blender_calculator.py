@@ -152,9 +152,9 @@ def calc_update(self, context):
     exp_inner = re.sub("([⁰¹²³⁴⁵⁶⁷⁸⁹]+)", "**\\1", exp_inner)
     exp_inner = exp_inner.translate(str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹","0123456789"))
 
-    exp_inner = re.sub("([^a-zA-Z_]|^)log([₀₁₂₃₄₅₆₇₈₉]+)\\((.+)\\)", "\\1___log(\\3,\\2)", exp_inner) # log₂₃(12)
-    exp_inner = re.sub("([^a-zA-Z_]|^)log([₀₁₂₃₄₅₆₇₈₉]+)\s*([0-9\\.]+)", "\\1___log(\\3,\\2)", exp_inner) # log₂₃12
-    exp_inner = re.sub("([^a-zA-Z_]|^)log([₀₁₂₃₄₅₆₇₈₉]+)\s*([a-zA-Z_]+)", "\\1___log(\\3,\\2)", exp_inner) # log₂₃aa
+    exp_inner = re.sub("([^a-zA-Z_]|^)log\s*([₀₁₂₃₄₅₆₇₈₉]+)\\((.+)\\)", "\\1___log(\\3,\\2)", exp_inner) # log₂₃(12)
+    exp_inner = re.sub("([^a-zA-Z_]|^)log\s*([₀₁₂₃₄₅₆₇₈₉]+)\s*([0-9\\.]+)", "\\1___log(\\3,\\2)", exp_inner) # log₂₃12
+    exp_inner = re.sub("([^a-zA-Z_]|^)log\s*([₀₁₂₃₄₅₆₇₈₉]+)\s*([a-zA-Z_]+)", "\\1___log(\\3,\\2)", exp_inner) # log₂₃aa
     exp_inner = exp_inner.translate(str.maketrans("₀₁₂₃₄₅₆₇₈₉","0123456789"))
 
     exp_inner = re.sub("([0-9\\.\s]+)and([0-9\\.\s]+)", "\\1&\\2", exp_inner) # 12 and 5 = 4
