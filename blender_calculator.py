@@ -22,8 +22,6 @@
 #
 # Note: The UI is some or less inspired from GNOME Calculator
 
-# TODO: Support subscript
-
 import bpy
 from bpy.props import (
     BoolProperty,
@@ -139,6 +137,11 @@ def calc_update(self, context):
     exp_inner = re.sub("([⁰¹²³⁴⁵⁶⁷⁸⁹]+)", "**\\1", exp_inner)
     exp_inner = exp_inner.translate(str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹","0123456789"))
 
+    exp_inner = re.sub("([^a-zA-Z_]|^)log([₀₁₂₃₄₅₆₇₈₉]+)\\((.+)\\)", "\\1___log(\\3,\\2)", exp_inner) # log₂₃(12)
+    exp_inner = re.sub("([^a-zA-Z_]|^)log([₀₁₂₃₄₅₆₇₈₉]+)\s*([0-9\\.]+)", "\\1___log(\\3,\\2)", exp_inner) # log₂₃12
+    exp_inner = re.sub("([^a-zA-Z_]|^)log([₀₁₂₃₄₅₆₇₈₉]+)\s*([a-zA-Z_]+)", "\\1___log(\\3,\\2)", exp_inner) # log₂₃aa
+    exp_inner = exp_inner.translate(str.maketrans("₀₁₂₃₄₅₆₇₈₉","0123456789"))
+
     exp_inner = re.sub("([0-9\\.\s]+)and([0-9\\.\s]+)", "\\1&\\2", exp_inner) # 12 and 5 = 4
     exp_inner = re.sub("([0-9\\.\s]+)or([0-9\\.\s]+)", "\\1|\\2", exp_inner) # 12 and 5 = 13
     exp_inner = re.sub("([0-9\\.\s]+)xor([0-9\\.\s]+)", "\\1^\\2", exp_inner)
@@ -156,11 +159,14 @@ def calc_update(self, context):
     # Complex Number translation
     exp_inner = re.sub("(([^a-zA-Z_0-9\\.]+|^)[0-9\\.]+) \\* i([^a-zA-Z_]+|$)", "\\1j\\3", exp_inner)
 
+#    print(exp_inner)
+
     dict |= {"sqrt": math.sqrt,
              "factorial": lambda x: math.gamma(x + 1), # internal
              "abs": math.fabs,
              "log": np.log10,
              "ln": np.log,
+             "___log": math.log,
              "___pi": math.pi,
              "e": math.e,
              "re": lambda x: x.real,
