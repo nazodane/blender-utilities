@@ -22,6 +22,7 @@
 #
 # Note: The UI is some or less inspired from GNOME Calculator
 
+# TODO: Support subscript
 
 import bpy
 from bpy.props import (
@@ -135,6 +136,9 @@ def calc_update(self, context):
                          .replace("π", "___pi") \
                          .replace("%", "*0.01")
 
+    exp_inner = re.sub("([⁰¹²³⁴⁵⁶⁷⁸⁹]+)", "**\\1", exp_inner)
+    exp_inner = exp_inner.translate(str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹","0123456789"))
+
     exp_inner = re.sub("([0-9\\.\s]+)and([0-9\\.\s]+)", "\\1&\\2", exp_inner) # 12 and 5 = 4
     exp_inner = re.sub("([0-9\\.\s]+)or([0-9\\.\s]+)", "\\1|\\2", exp_inner) # 12 and 5 = 13
     exp_inner = re.sub("([0-9\\.\s]+)xor([0-9\\.\s]+)", "\\1^\\2", exp_inner)
@@ -218,6 +222,13 @@ class CALC_OT_InputBase():
         if self.c in ["sqrt", "abs", "arg", "log", "ln", "re", "im", "conj",
                       "sin", "cos", "tan", "sinh", "cosh", "tanh"]:
             scene.calc_exp = self.c + "(" + scene.calc_exp + ")"
+        elif self.c in "0123456789":
+            if scene.calc_is_subscript_input:
+                scene.calc_exp += "₀₁₂₃₄₅₆₇₈₉"[int(self.c[0])-int('0')]
+            elif scene.calc_is_superscript_input:
+                scene.calc_exp += "⁰¹²³⁴⁵⁶⁷⁸⁹"[int(self.c[0])-int('0')]
+            else:
+                scene.calc_exp += self.c
         else:
             scene.calc_exp += self.c
         return {'FINISHED'}
@@ -361,8 +372,8 @@ class CALC_PT_CustomPanel(bpy.types.Panel):
             col.operator(CALC_OT_Input_equal.bl_idname, text="=")
         elif scene.calc_mode == "ADVANCED":
             row = layout.row(align=True)
-            row.label(text="") # placeholder
-            row.label(text="") # placeholder
+            row.prop(scene, "calc_is_subscript_input", text="↓n", toggle=True)
+            row.prop(scene, "calc_is_superscript_input", text="↑n", toggle=True)
             row.operator(CALC_OT_Input_sexp.bl_idname, text="×10ʸ")
             row.operator(CALC_OT_Input_mod.bl_idname, text="mod")
             row.operator("ed.undo", text="Undo")
@@ -433,6 +444,14 @@ class CALC_Variable_PropertiesGroup(bpy.types.PropertyGroup):
     name: StringProperty(name="Variable Name", default="")
     val: StringProperty(name="Variable Value", default="")
 
+def update_superscript(self, context):
+    if self.calc_is_superscript_input:
+        self.calc_is_subscript_input = False
+
+def update_subscript(self, context):
+    if self.calc_is_subscript_input:
+        self.calc_is_superscript_input = False
+
 def init_props():
     scene = bpy.types.Scene
     scene.calc_exp = StringProperty(name="Expression for calculation",
@@ -456,6 +475,14 @@ def init_props():
                                       description="If you checked this, the valid expression will evaluate immediately. "+ \
                                                    "If not, the evaluation is delayed to the input of '='",
                                       default=False)
+
+    scene.calc_is_superscript_input = BoolProperty(name="Superscript Input",
+                                                   default=False,
+                                                   update=update_superscript)
+    scene.calc_is_subscript_input = BoolProperty(name="Subscript Input",
+                                                 default=False,
+                                                   update=update_subscript)
+
 
 def clear_props():
     del calc_exp
