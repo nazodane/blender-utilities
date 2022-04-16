@@ -12,6 +12,6 @@ The hash addon is my recreation of [GtkHash 1.2](https://github.com/tristanheave
 ![Screenshot of Hash addon](screenshot_hash.png)
 
 ## Calculator addon for Blender
-The calculator addon is some or less inspired by Gnome  Calculator but less functional. It just needs more love.
+The calculator addon is some or less inspired by Gnome Calculator but less functional. It just needs more love.
 
 ![Screenshot of Calculator addon](screenshot_calculator.png)
