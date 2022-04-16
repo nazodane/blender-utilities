@@ -78,6 +78,7 @@ class CALC_UL_HistList(bpy.types.UIList):
 
 import math
 import numpy as np
+from random import random
 def calc_update(self, context):
     exp = self.calc_exp
     if exp.find("__") >= 0 or exp == "": # dangerous
@@ -88,12 +89,16 @@ def calc_update(self, context):
     exp = exp if exp[-1] != "=" else exp[0:-1]
 
     try:
+#    if True:
         res = str(eval(exp, {'__builtins__': 
                                  {"sqrt": math.sqrt,
                                   "factorial": lambda x: math.gamma(x + 1),
                                   "fabs": math.fabs,
                                   "log": np.log10,
-                                  "ln": np.log}}))
+                                  "ln": np.log,
+                                  "_": eval(self.calc_hist[0].result) if len(self.calc_hist) else 0,
+                                  "rand": random(),
+                                  }}))
         if res == exp:
             return
         self.calc_exp = res
