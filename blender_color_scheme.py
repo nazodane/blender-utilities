@@ -443,7 +443,7 @@ def register():
         bpy.utils.register_class(c)
     init_props()
     try:
-        bpy.app.translations.register(__name__, translation_dict)
+        bpy.app.translations.register("blender_color_scheme", translation_dict)
     except: pass
 
 
@@ -452,7 +452,7 @@ def unregister():
     for c in classes:
         bpy.utils.unregister_class(c)
     try:
-        bpy.app.translations.unregister(__name__)
+        bpy.app.translations.unregister("blender_color_scheme")
     except: pass
 
 if __name__ == "__main__":
