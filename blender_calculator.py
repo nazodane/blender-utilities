@@ -254,10 +254,12 @@ class CALC_OT_InputBase():
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
         scene = context.scene
-        if scene.calc_is_live and \
-           self.c in ["sqrt", "abs", "arg", "log", "ln", "re", "im", "conj", \
+        if self.c in ["sqrt", "abs", "arg", "log", "ln", "re", "im", "conj", \
                       "sin", "cos", "tan", "sinh", "cosh", "tanh"]:
-            scene.calc_exp = self.c + "(" + scene.calc_exp + ")"
+            if scene.calc_is_live:
+                scene.calc_exp = self.c + "(" + scene.calc_exp + ")"
+            else:
+                scene.calc_exp = scene.calc_exp + self.c + " "
         elif self.c in "0123456789":
             if scene.calc_is_subscript_input:
                 scene.calc_exp += "₀₁₂₃₄₅₆₇₈₉"[int(self.c[0])-int('0')]
