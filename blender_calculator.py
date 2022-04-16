@@ -98,6 +98,8 @@ def calc_update(self, context):
     for i in self.calc_vars:
             dict[i.name] = eval(i.val)
 
+    exp_inner = exp_inner.replace("^", "**")
+
     exp_inner = exp_inner.replace("√", "sqrt") \
                          .replace("sin⁻¹", "asin") \
                          .replace("cos⁻¹", "acos") \
@@ -105,11 +107,27 @@ def calc_update(self, context):
                          .replace("tan⁻¹", "atan") \
                          .replace("sinh⁻¹", "asinh") \
                          .replace("cosh⁻¹", "acosh") \
-                         .replace("tanh⁻¹", "atanh")
+                         .replace("tanh⁻¹", "atanh") \
+                         .replace("÷", "/") \
+                         .replace("×", "*") \
+                         .replace("−", "-") \
+                         .replace("«", "<<") \
+                         .replace("»", ">>") \
+                         .replace("∧", "&") \
+                         .replace("∨", "|") \
+                         .replace("⊻", "^") \
+                         .replace("⁻¹", "**-1")
+
+    exp_inner = exp_inner.replace("and", "&") # 12 and 5 = 4
+    exp_inner = exp_inner.replace("or", "|")  # 12 and 5 = 13
+    exp_inner = exp_inner.replace("xor", "^")
 
     # Complex Number translation
     exp_inner = re.sub("([^a-zA-Z_0-9][0-9]+)i", "\\1j", exp_inner)
 
+    exp_inner = re.sub("(\s)mod(\s)", "\\1%\\2", exp_inner)
+    # TODO: "2mod5mod5" is acceptable by Gnome Calculator but it's too complicated for regular expression...
+    # TODO: mod with hexadecimal mode
 
     dict |= {"sqrt": math.sqrt,
              "factorial": lambda x: math.gamma(x + 1), # internal
@@ -146,6 +164,7 @@ def calc_update(self, context):
 
 #             "ones": ,
 #             "twos": ,
+#             "not": ,
 
              "_": eval(self.calc_hist[0].result) if len(self.calc_hist) else 0,
              "rand": random(),
