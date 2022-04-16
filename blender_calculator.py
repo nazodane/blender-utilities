@@ -96,10 +96,6 @@ import re
 def calc_update(self, context):
     exp = self.calc_exp
 
-    if not self.calc_is_inited: # TODO: not good...
-        update_rand(self)
-        self.calc_is_inited = True
-
     exp = exp.replace("/", "÷") \
              .replace("**", "^") \
              .replace("×*", "^") \
@@ -517,6 +513,10 @@ def update_subscript(self, context):
 def update_active_calc_vars_index(self, context):
     self.calc_exp += self.calc_vars[self.active_calc_vars_index].name
 
+def update_mode(self, context):
+    if not self.calc_is_inited:
+        update_rand(self)
+        self.calc_is_inited = True
 
 def init_props():
     scene = bpy.types.Scene
@@ -536,7 +536,8 @@ def init_props():
             ('BASIC', "Basic Mode", "Basic Mode"),
             ('ADVANCED', "Advanced Mode", "Advanced Mode"),
         ],
-        default='BASIC'
+        default='BASIC',
+        update=update_mode
     )
 
     scene.calc_is_live = BoolProperty(name="Live Calculation",
