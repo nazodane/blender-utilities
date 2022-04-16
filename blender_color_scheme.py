@@ -72,6 +72,7 @@ translation_dict = {
         ("*", "Decrease the saturation"): "彩度を減少します",
 
         ("*", "Color Scheme Method"): "色スキーム方式",
+        ("*", "Generating method for color scheme"): "色スキームの生成方式",
         ("*", "Complements"): "補色（対峙色）",
         ("*", "Split Complements"): "分裂補色",
         ("*", "Triads"): "三色配色",
@@ -200,7 +201,7 @@ def method_to_length(method):
 class COLORSCHEME_OT_ColorSchemeFavorite(bpy.types.Operator):
     bl_idname = "colorscheme.colorschemefavorite"
     bl_label = "Add to Favorites"
-    bl_description = "Add the current colors to favorites"
+    bl_description = "Add the current color scheme to favorites"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -216,7 +217,7 @@ class COLORSCHEME_OT_ColorSchemeFavorite(bpy.types.Operator):
 class COLORSCHEME_OT_ColorSchemeFavoriteRemove(bpy.types.Operator):
     bl_idname = "colorscheme.colorschemefavoriteremove"
     bl_label = "Remove Selected"
-    bl_description = "Remove the selected colors from your favorites"
+    bl_description = "Remove the selected color scheme from your favorites"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
