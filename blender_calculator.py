@@ -126,6 +126,10 @@ def calc_update(self, context):
     # TODO: mod with hexadecimal mode
 
     exp_inner = re.sub("([0-9]+)\s*([a-zA-Z_]+)", "\\1 * \\2", exp_inner) # 11e -> 11 * e
+    exp_inner = re.sub("([a-zA-Z_]+)\s*([0-9]+|\s+[a-zA-Z_]+)", "\\1(\\2)", exp_inner) # frac11 -> frac(11)
+
+# a=2
+# sqrt2a = 2.8284
 
     exp_inner = re.sub("([0-9]+|[a-zA-Z_]+)\s*!", " factorial(\\1)", exp_inner)
 
