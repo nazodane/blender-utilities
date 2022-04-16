@@ -98,8 +98,20 @@ def calc_update(self, context):
     for i in self.calc_vars:
             dict[i.name] = eval(i.val)
 
+    exp_inner = exp_inner.replace("√", "sqrt") \
+                         .replace("sin⁻¹", "asin") \
+                         .replace("cos⁻¹", "acos") \
+                         .replace("sin⁻¹", "asin") \
+                         .replace("tan⁻¹", "atan") \
+                         .replace("sinh⁻¹", "asinh") \
+                         .replace("cosh⁻¹", "acosh") \
+                         .replace("tanh⁻¹", "atanh")
+
+    # Complex Number translation
+    exp_inner = re.sub("([^a-zA-Z_0-9][0-9]+)i", "\\1j", exp_inner)
+
+
     dict |= {"sqrt": math.sqrt,
-             "√": math.sqrt,
              "factorial": lambda x: math.gamma(x + 1), # internal
              "abs": math.fabs,
              "log": np.log10,
@@ -115,21 +127,15 @@ def calc_update(self, context):
              "tan": lambda x: np.tan(np.deg2rad(x)), # TODO: complex number
 
              "asin": lambda x: np.rad2deg(np.arcsin(x)), # TODO: complex number
-             "sin⁻¹": lambda x: np.rad2deg(np.arcsin(x)), # TODO: complex number
              "acos": lambda x: np.rad2deg(np.arccos(x)), # TODO: complex number
-             "cos⁻¹": lambda x: np.rad2deg(np.arccos(x)), # TODO: complex number
              "atan": lambda x: np.rad2deg(np.arctan(x)), # TODO: complex number
-             "tan⁻¹": lambda x: np.rad2deg(np.arctan(x)), # TODO: complex number
 
              "sinh": np.sinh,
              "cosh": np.cosh,
              "tanh": np.tanh,
              "asinh": np.arcsinh,
-             "sinh⁻¹": np.arcsinh,
              "acosh": np.arccosh,
-             "cosh⁻¹": np.arccosh,
              "atanh": np.arctanh,
-             "tanh⁻¹": np.arctanh,
 
              "sgn": np.sign,
              "round": np.round, # TODO: hmm... round(12.5) -> 12
