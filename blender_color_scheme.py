@@ -52,10 +52,58 @@ bl_info = {
     "category": "System"
 }
 
+translation_dict = {
+    "en_US": {
+    },
+    "ja_JP": { # based on po/ja.po which was created by me!
+        ("*", "Color Schemes"): "色スキーム",
+        ("*", "Base Color:"): "ベース色:",
+
+        ("*", "Random"): "ランダム",
+        ("*", "Generate a random color"): "ランダムな色を生成します",
+
+        ("*", "Lighten Scheme"): "明るいスキーム",
+        ("*", "Darken Scheme"): "暗いスキーム",
+        ("*", "Increase the brightness"): "明るさを増加します",
+        ("*", "Decrease the brightness"): "明るさを減少します",
+        ("*", "Saturate Scheme"): "濃いスキーム",
+        ("*", "Desaturate Scheme"): "薄いスキーム",
+        ("*", "Increase the saturation"): "彩度を増加します",
+        ("*", "Decrease the saturation"): "彩度を減少します",
+
+        ("*", "Color Scheme Method"): "色スキーム方式",
+        ("*", "Complements"): "補色（対峙色）",
+        ("*", "Split Complements"): "分裂補色",
+        ("*", "Triads"): "三色配色",
+        ("*", "Tetrads"): "四色配色",
+        ("*", "Analogous"): "類似色",
+        ("*", "Monochromatic"): "単色",
+
+        ("*", "Calculated:"): "結果:",
+        ("*", "Color Scheme Calculated 1"): "色スキーム結果 1",
+        ("*", "Color Scheme Calculated 2"): "色スキーム結果 2",
+        ("*", "Color Scheme Calculated 3"): "色スキーム結果 3",
+        ("*", "Color Scheme Calculated 4"): "色スキーム結果 4",
+        ("*", "Add to Favorites"): "お気に入りに追加する",
+        ("*", "Add the current color scheme to favorites"): "現在の色スキームをお気に入りに追加します",
+
+        ("*", "Favorites:"): "お気に入り:",
+        ("*", "Remove Selected"): "選択しているものを削除",
+        ("*", "Remove the selected color scheme from your favorites"): "お気に入りから選んだ色スキームを削除します",
+
+        ("*", "Color 1"): "色 1",
+        ("*", "Color 2"): "色 2",
+        ("*", "Color 3"): "色 3",
+        ("*", "Color 4"): "色 4",
+    }
+}
+
+
+
 class COLORSCHEME_OT_ColorRandomize(bpy.types.Operator):
     bl_idname = "colorscheme.colorrandomize"
-    bl_label = "Color Randomize"
-    bl_description = "Color Randomize"
+    bl_label = "Random"
+    bl_description = "Generate a random color"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -69,8 +117,8 @@ maxSvValue = 1.0
 # from gcs-mainwindow-actions.cc
 class COLORSCHEME_OT_ColorLighten(bpy.types.Operator):
     bl_idname = "colorscheme.colorlighten"
-    bl_label = "Increase the brightness"
-    bl_description = "Get lighten color schemes"
+    bl_label = "Lighten Scheme"
+    bl_description = "Increase the brightness"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -82,8 +130,8 @@ class COLORSCHEME_OT_ColorLighten(bpy.types.Operator):
 
 class COLORSCHEME_OT_ColorDarken(bpy.types.Operator):
     bl_idname = "colorscheme.colordarken"
-    bl_label = "Decrease the brightness"
-    bl_description = "Get darken color schemes"
+    bl_label = "Darken Scheme"
+    bl_description = "Decrease the brightness"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -96,8 +144,8 @@ class COLORSCHEME_OT_ColorDarken(bpy.types.Operator):
 
 class COLORSCHEME_OT_ColorSaturate(bpy.types.Operator):
     bl_idname = "colorscheme.colorsaturate"
-    bl_label = "Increase the saturation"
-    bl_description = "Get lighten color schemes"
+    bl_label = "Saturate Scheme"
+    bl_description = "Increase the saturation"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -109,8 +157,8 @@ class COLORSCHEME_OT_ColorSaturate(bpy.types.Operator):
 
 class COLORSCHEME_OT_ColorDesaturate(bpy.types.Operator):
     bl_idname = "colorscheme.colordesaturate"
-    bl_label = "Decrease the saturation"
-    bl_description = "Get darken color schemes"
+    bl_label = "Desaturate Scheme"
+    bl_description = "Decrease the saturation"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -151,8 +199,8 @@ def method_to_length(method):
 
 class COLORSCHEME_OT_ColorSchemeFavorite(bpy.types.Operator):
     bl_idname = "colorscheme.colorschemefavorite"
-    bl_label = "Favorite colorscheme"
-    bl_description = "Favorite colorscheme"
+    bl_label = "Add to Favorites"
+    bl_description = "Add the current colors to favorites"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -167,8 +215,8 @@ class COLORSCHEME_OT_ColorSchemeFavorite(bpy.types.Operator):
 
 class COLORSCHEME_OT_ColorSchemeFavoriteRemove(bpy.types.Operator):
     bl_idname = "colorscheme.colorschemefavoriteremove"
-    bl_label = "Remove the favorite colorscheme"
-    bl_description = "Remove the favorite colorscheme"
+    bl_label = "Remove Selected"
+    bl_description = "Remove the selected colors from your favorites"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -394,12 +442,18 @@ def register():
     for c in classes:
         bpy.utils.register_class(c)
     init_props()
+    try:
+        bpy.app.translations.register(__name__, translation_dict)
+    except: pass
 
 
 def unregister():
     clear_props()
     for c in classes:
         bpy.utils.unregister_class(c)
+    try:
+        bpy.app.translations.unregister(__name__)
+    except: pass
 
 if __name__ == "__main__":
     register()
