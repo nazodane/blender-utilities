@@ -44,6 +44,26 @@ bl_info = {
     "category": "System"
 }
 
+translation_dict = {
+    "en_US": {
+    },
+    "ja_JP": {
+        ("*", "Calculator"): "電卓",
+
+        ("*", "Expression for calculation"): "計算する式",
+
+        ("*", "History:"): "履歴:",
+        ("*", "Clear History"): "履歴をクリア",
+        ("*", "Remove all history"): "全ての履歴を削除する",
+
+        ("*", "Live Calculation"): "逐次計算",
+        ("*", "If you checked this, the valid expression will evaluate immediately. "+ \
+              "If not, the evaluation is delayed to the input of '='"): 
+                  "これにチェックを入れた場合、正しい式は直ぐに評価されます。" + \
+                  "チェックを入れなかった場合、評価は「=」の入力まで遅延されます。",
+    }
+}
+
 class CALC_UL_HistList(bpy.types.UIList):
     use_filter_show: False
     def draw_item(self, context, layout, data, item, icon, active_data):
@@ -129,9 +149,9 @@ CALC_OT_Input_ln = CALC_new_input_class("ln")
 
 CALC_OT_Input_equal = CALC_new_input_class("=", "equal")
 
-class CALC_OT_HistClean(bpy.types.Operator):
-    bl_idname = "calc.histclean"
-    bl_label = "Clean History"
+class CALC_OT_HistClear(bpy.types.Operator):
+    bl_idname = "calc.histclear"
+    bl_label = "Clear History"
     bl_description = "Remove all history"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -161,7 +181,7 @@ class CALC_PT_CustomPanel(bpy.types.Panel):
         layout.prop(scene, "calc_exp", text="Expression")
         row = layout.row(align=True)
         row.label(text="History:")
-        row.operator(CALC_OT_HistClean.bl_idname, text="", icon="X")
+        row.operator(CALC_OT_HistClear.bl_idname, text="", icon="X")
         layout.template_list("CALC_UL_HistList", "", scene, "calc_hist", scene, "active_calc_hist_index")
 
         layout.prop(scene, "calc_is_live")
@@ -230,7 +250,7 @@ def clear_props():
 
 classes = [
     CALC_PT_CustomPanel,
-    CALC_OT_HistClean,
+    CALC_OT_HistClear,
     CALC_Hist_PropertiesGroup,
     CALC_UL_HistList,
     CALC_OT_Input_0,
@@ -264,11 +284,17 @@ def register():
     for c in classes:
         bpy.utils.register_class(c)
     init_props()
+    try:
+        bpy.app.translations.register("blender_calculator", translation_dict)
+    except: pass
 
 def unregister():
     clear_props()
     for c in classes:
         bpy.utils.unregister_class(c)
+    try:
+        bpy.app.translations.unregister("blender_calculator")
+    except: pass
 
 if __name__ == "__main__":
     register()
