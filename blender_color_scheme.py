@@ -318,7 +318,7 @@ def init_props():
 
     scene.colorscheme_base = FloatVectorProperty(name="Color Scheme Base", 
                                                 subtype='COLOR', 
-                                                default=[0.0,0.0,0.0],
+                                                default=[0.8,0.8,0.8],
                                                 update=colorscheme_update)
 
     scene.colorscheme_method = EnumProperty(
