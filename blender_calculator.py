@@ -116,25 +116,28 @@ def calc_update(self, context):
                          .replace("∧", "&") \
                          .replace("∨", "|") \
                          .replace("⊻", "^") \
-                         .replace("⁻¹", "**-1")
+                         .replace("⁻¹", "**-1") \
+                         .replace("π", "___pi")
 
-    exp_inner = exp_inner.replace("and", "&") # 12 and 5 = 4
-    exp_inner = exp_inner.replace("or", "|")  # 12 and 5 = 13
-    exp_inner = exp_inner.replace("xor", "^")
+    exp_inner = re.sub("([0-9\s]+)and([0-9\s]+)", "\\1&\\2", exp_inner) # 12 and 5 = 4
+    exp_inner = re.sub("([0-9\s]+)or([0-9\s]+)", "\\1|\\2", exp_inner) # 12 and 5 = 13
+    exp_inner = re.sub("([0-9\s]+)xor([0-9\s]+)", "\\1^\\2", exp_inner)
+    exp_inner = re.sub("([0-9\s]+)mod([0-9\s]+)", "\\1%\\2", exp_inner)
+    # TODO: mod with hexadecimal mode
+
+    exp_inner = re.sub("([0-9]+)\s*([a-zA-Z_]+)", "\\1 * \\2", exp_inner) # 11e -> 11 * e
+
+    exp_inner = re.sub("([0-9]+|[a-zA-Z_]+)\s*!", " factorial(\\1)", exp_inner)
 
     # Complex Number translation
-    exp_inner = re.sub("([^a-zA-Z_0-9][0-9]+)i", "\\1j", exp_inner)
-
-    exp_inner = re.sub("(\s)mod(\s)", "\\1%\\2", exp_inner)
-    # TODO: "2mod5mod5" is acceptable by Gnome Calculator but it's too complicated for regular expression...
-    # TODO: mod with hexadecimal mode
+    exp_inner = re.sub("(([^a-zA-Z_0-9]+|^)[0-9]+) \\* i([^a-zA-Z_]+|$)", "\\1j\\3", exp_inner)
 
     dict |= {"sqrt": math.sqrt,
              "factorial": lambda x: math.gamma(x + 1), # internal
              "abs": math.fabs,
              "log": np.log10,
              "ln": np.log,
-             "π": math.pi,
+             "___pi": math.pi,
              "e": math.e,
              "re": lambda x: x.real,
              "im": lambda x: x.imag,
