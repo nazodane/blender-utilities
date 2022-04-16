@@ -210,7 +210,12 @@ def calc_update(self, context):
             return
 
         if var_name:
-            var = self.calc_vars.add()
+            var = None
+            for i in self.calc_vars:
+                if i.name == var_name:
+                    var = i
+            if not var:
+                var = self.calc_vars.add()
             var.name = var_name
             var.val = res
 
@@ -316,6 +321,28 @@ class CALC_OT_HistClear(bpy.types.Operator):
         scene.calc_vars.clear()
         return {'FINISHED'}
 
+class CALC_UL_VariablesList(bpy.types.UIList):
+    use_filter_show: False
+    def draw_item(self, context, layout, data, item, icon, active_data):
+        col = layout.column()
+        row = col.row(align=True)
+        row.prop(item, "name", text="")
+        row.label(text="", icon="FORWARD")
+        row.prop(item, "val", text="")
+
+    def draw_filter(self, context, layout): # hide useless filter menus
+        row = layout.row()
+
+class CALC_MT_Variables(bpy.types.Menu):
+    bl_idname="CALC_MT_variables"
+    bl_label="Menu"
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        layout.template_list("CALC_UL_VariablesList", "", scene, "calc_vars", scene, "active_calc_vars_index")
+        
+
 class CALC_PT_CustomPanel(bpy.types.Panel):
     bl_label = "Calculator"
     bl_space_type = 'VIEW_3D'
@@ -404,7 +431,7 @@ class CALC_PT_CustomPanel(bpy.types.Panel):
             row.operator(CALC_OT_Input_5.bl_idname, text="5")
             row.operator(CALC_OT_Input_6.bl_idname, text="6")
             row.operator(CALC_OT_Input_mul.bl_idname, text="×")
-            row.label(text="") # placeholder
+            row.menu(CALC_MT_Variables.bl_idname)
             row.label(text="") # placeholder
             row.operator(CALC_OT_Input_inv.bl_idname, text="x⁻¹")
             row.operator(CALC_OT_Input_factorial.bl_idname, text="x!")
@@ -466,6 +493,7 @@ def init_props():
     scene.active_calc_hist_index = IntProperty(name="Active calculation history index")
 
     scene.calc_vars = CollectionProperty(type=CALC_Variable_PropertiesGroup)
+    scene.active_calc_vars_index = IntProperty(name="Active calculation variables index")
 
     scene.calc_mode = EnumProperty(
         name="Calculator Mode",
@@ -494,6 +522,8 @@ def clear_props():
     del calc_exp
     del scene.calc_hist
     del scene.active_calc_hist_index
+    del scene.calc_vars
+    del scene.active_calc_vars_index
     del scene.calc_mode
     del scene.calc_is_live
 
@@ -503,6 +533,8 @@ classes = [
     CALC_Hist_PropertiesGroup,
     CALC_UL_HistList,
     CALC_Variable_PropertiesGroup,
+    CALC_UL_VariablesList,
+    CALC_MT_Variables,
     CALC_OT_ExpClear,
     CALC_OT_Input_0,
     CALC_OT_Input_1,
