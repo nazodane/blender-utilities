@@ -96,7 +96,7 @@ def calc_update(self, context):
 
     dict = {}
     for i in self.calc_vars:
-            dict[i.name] = eval(i.val)
+            dict[i.name] = eval(i.val.replace("i", "j"))
 
     exp_inner = exp_inner.replace("^", "**")
 
@@ -173,20 +173,20 @@ def calc_update(self, context):
 #             "twos": ,
 #             "not": ,
 
-             "_": eval(self.calc_hist[0].result) if len(self.calc_hist) else 0,
+             "_": eval(self.calc_hist[0].result.replace("i", "j")) if len(self.calc_hist) else 0,
              "rand": random(),
             }
 
     try:
 #    if True:
-        res = str(eval(exp_inner, {'__builtins__': dict}))
+        res = str(eval(exp_inner, {'__builtins__': dict})).replace("j", "i")
         if res == exp:
             return
 
         if var_name:
             var = self.calc_vars.add()
             var.name = var_name
-            var.val = exp_inner
+            var.val = res
 
         self.calc_exp = res
         hist = self.calc_hist.add()
