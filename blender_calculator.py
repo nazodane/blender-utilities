@@ -79,6 +79,7 @@ class CALC_UL_HistList(bpy.types.UIList):
 import math
 import numpy as np
 from random import random
+import re
 def calc_update(self, context):
     exp = self.calc_exp
     if exp.find("__") >= 0 or exp == "": # dangerous
@@ -87,20 +88,34 @@ def calc_update(self, context):
         return
 
     exp = exp if exp[-1] != "=" else exp[0:-1]
+    exp_re = re.split("^\s*([a-zA-Z_][a-zA-Z_0-9]*)=(.+)$", exp)
+    exp_inner = exp if exp_re[0] else exp_re[2]
+    var_name = exp_re[1] if len(exp_re) > 1 else None
+
+    dict = {}
+    for i in self.calc_vars:
+            dict[i.name] = eval(i.val)
+
+    dict |= {"sqrt": math.sqrt,
+             "factorial": lambda x: math.gamma(x + 1),
+             "fabs": math.fabs,
+             "log": np.log10,
+             "ln": np.log,
+             "_": eval(self.calc_hist[0].result) if len(self.calc_hist) else 0,
+             "rand": random(),
+            }
 
     try:
 #    if True:
-        res = str(eval(exp, {'__builtins__': 
-                                 {"sqrt": math.sqrt,
-                                  "factorial": lambda x: math.gamma(x + 1),
-                                  "fabs": math.fabs,
-                                  "log": np.log10,
-                                  "ln": np.log,
-                                  "_": eval(self.calc_hist[0].result) if len(self.calc_hist) else 0,
-                                  "rand": random(),
-                                  }}))
+        res = str(eval(exp_inner, {'__builtins__': dict}))
         if res == exp:
             return
+
+        if var_name:
+            var = self.calc_vars.add()
+            var.name = var_name
+            var.val = exp_inner
+
         self.calc_exp = res
         hist = self.calc_hist.add()
         hist["exp"] = exp
@@ -163,6 +178,7 @@ class CALC_OT_HistClear(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
         scene.calc_hist.clear()
+        scene.calc_vars.clear()
         return {'FINISHED'}
 
 class CALC_PT_CustomPanel(bpy.types.Panel):
@@ -235,12 +251,18 @@ class CALC_Hist_PropertiesGroup(bpy.types.PropertyGroup):
                            if "result" in t else "",
                            set=lambda t, v: None)
 
+class CALC_Variable_PropertiesGroup(bpy.types.PropertyGroup):
+    name: StringProperty(name="Variable Name", default="")
+    val: StringProperty(name="Variable Value", default="")
+
 def init_props():
     scene = bpy.types.Scene
     scene.calc_exp = StringProperty(name="Expression for calculation",
                                     default="", update=calc_update)
     scene.calc_hist = CollectionProperty(type=CALC_Hist_PropertiesGroup)
     scene.active_calc_hist_index = IntProperty(name="Active calculation history index")
+
+    scene.calc_vars = CollectionProperty(type=CALC_Variable_PropertiesGroup)
 
     scene.calc_is_live = BoolProperty(name="Live Calculation",
                                       description="If you checked this, the valid expression will evaluate immediately. "+ \
@@ -258,6 +280,7 @@ classes = [
     CALC_OT_HistClear,
     CALC_Hist_PropertiesGroup,
     CALC_UL_HistList,
+    CALC_Variable_PropertiesGroup,
     CALC_OT_Input_0,
     CALC_OT_Input_1,
     CALC_OT_Input_2,
