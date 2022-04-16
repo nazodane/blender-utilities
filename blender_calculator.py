@@ -254,7 +254,8 @@ class CALC_OT_InputBase():
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
         scene = context.scene
-        if self.c in ["sqrt", "abs", "arg", "log", "ln", "re", "im", "conj",
+        if scene.calc_is_live and \
+           self.c in ["sqrt", "abs", "arg", "log", "ln", "re", "im", "conj", \
                       "sin", "cos", "tan", "sinh", "cosh", "tanh"]:
             scene.calc_exp = self.c + "(" + scene.calc_exp + ")"
         elif self.c in "0123456789":
