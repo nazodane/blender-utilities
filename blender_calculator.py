@@ -217,7 +217,10 @@ def init_props():
     scene.calc_hist = CollectionProperty(type=CALC_Hist_PropertiesGroup)
     scene.active_calc_hist_index = IntProperty(name="Active calculation history index")
 
-    scene.calc_is_live = BoolProperty(name="Live Calculation", default=False)
+    scene.calc_is_live = BoolProperty(name="Live Calculation",
+                                      description="If you checked this, the valid expression will evaluate immediately. "+ \
+                                                   "If not, the evaluation is delayed to the input of '='",
+                                      default=False)
 
 def clear_props():
     del calc_exp
