@@ -7,11 +7,11 @@ The color scheme addon is based on [Agave 0.4.7](https://web.archive.org/web/201
 ![Screenshot of Color Scheme addon](screenshot_color_scheme.png)
 
 ## Hash addon for Blender
-The hash addon is my recreation of [GtkHash 1.2](https://github.com/tristanheaven/gtkhash). The source code is not based on GtkHash, though.
+The hash addon is my recreation of [GtkHash 1.2](https://github.com/tristanheaven/gtkhash). The source code is *not* based on GtkHash, though.
 
 ![Screenshot of Hash addon](screenshot_hash.png)
 
 ## Calculator addon for Blender
-The calculator addon is some or less inspired by Gnome Calculator but less functional. It just needs more love.
+The calculator addon is my recreation of [Gnome Calculator](https://wiki.gnome.org/Apps/Calculator) but less functional. It just needs more love. The source code is *not* based on Gnome Calculator.
 
 ![Screenshot of Calculator addon](screenshot_calculator.png)
