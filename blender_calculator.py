@@ -258,7 +258,9 @@ def calc_update(self, context):
     exp_inner = re.sub("([0-9\\.\s]+)mod([0-9\\.\s]+)", "\\1%\\2", exp_inner)
     # TODO: mod with hexadecimal mode
 
-    exp_inner = re.sub("([0-9\\.]+)\s*([a-zA-Z_]+)", "\\1 * \\2", exp_inner) # 11e -> 11 * e
+    # 11e -> 11 * e ; 4(12) -> 4 * (12) ; (12)(12) -> (12) * (12) ; (12)e -> (12) * e
+    exp_inner = re.sub("([0-9\\.\\)]+)\s*([a-zA-Z_\\(]+)", "\\1 * \\2", exp_inner)
+    exp_inner = re.sub("([\\)]+)\s*([0-9\\.]+)", "\\1 * \\2", exp_inner) # (12)4 -> (12) * 4
     exp_inner = re.sub("([a-zA-Z_]+)\s*([0-9\\.]+|\s+[a-zA-Z_]+)", "\\1(\\2)", exp_inner) # frac11 -> frac(11)
 
 # a=2
