@@ -283,6 +283,7 @@ def calc_update(self, context):
              "___log": math.log,
              "___pi": math.pi,
              "e": math.e,
+             "i": 1j,
     }
 
     try:
