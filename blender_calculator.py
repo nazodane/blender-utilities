@@ -113,7 +113,7 @@ func_dict = {"sqrt": math.sqrt,
             }
 
 from random import random
-def initialize_collection(scene):
+def update_rand(scene):
     var = None
     for i in scene.calc_vars:
         if i.name == "rand":
@@ -122,6 +122,9 @@ def initialize_collection(scene):
         var = scene.calc_vars.add()
     var.name = "rand"
     var.val = str(random())
+
+def initialize_collection(scene):
+    update_rand(scene)
 
     for i in sorted(func_dict.keys()):
         func = scene.calc_funcs.add()
