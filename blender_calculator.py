@@ -282,8 +282,8 @@ def calc_update(self, context):
              "e": math.e,
     }
 
-#    try:
-    if True:
+    try:
+#    if True:
         res = str(eval(exp_inner, {'__builtins__': dict})).replace("j", "i")
         if res == exp:
             return
@@ -315,7 +315,7 @@ def calc_update(self, context):
 
         update_rand(self)
 
-#    except: pass
+    except: pass
 
 class CALC_OT_InputBase():
     bl_options = {'REGISTER', 'UNDO'}
