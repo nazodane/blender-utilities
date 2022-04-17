@@ -214,10 +214,10 @@ def calc_update(self, context):
 #                print(treg)
             reg = reg[0:-1] + "\\)"
             treg += ")"
-            print(i.proto)
-            print(reg)
-            print(i.define)
-            print(treg)
+#            print(i.proto)
+#            print(reg)
+#            print(i.define)
+#            print(treg)
             exp_inner = re.sub(reg, treg, exp_inner)
 
     dict = {}
