@@ -65,8 +65,55 @@ translation_dict = {
     }
 }
 
+import math
+from math import nan, inf
+import numpy as np
+import cmath
+func_dict = {"sqrt": math.sqrt,
+             "abs": math.fabs,
+             "log": np.log10,
+             "ln": np.log,
+             "re": lambda x: x.real,
+             "im": lambda x: x.imag,
+             "conj": np.conj,
+             "arg": lambda x: np.angle(x, deg=True),
+             "sin": lambda x: np.sin(np.deg2rad(x)), # TODO: complex number
+             "cos": lambda x: np.cos(np.deg2rad(x)), # TODO: complex number
+             "tan": lambda x: np.tan(np.deg2rad(x)), # TODO: complex number
+
+             "asin": lambda x: np.rad2deg(np.arcsin(x)), # TODO: complex number
+             "acos": lambda x: np.rad2deg(np.arccos(x)), # TODO: complex number
+             "atan": lambda x: np.rad2deg(np.arctan(x)), # TODO: complex number
+
+             "sinh": np.sinh,
+             "cosh": np.cosh,
+             "tanh": np.tanh,
+             "asinh": np.arcsinh,
+             "acosh": np.arccosh,
+             "atanh": np.arctanh,
+
+             "sgn": np.sign,
+             "round": np.round, # TODO: hmm... round(12.5) -> 12
+             "floor": np.floor,
+             "ceil": np.ceil,
+             "int": int,
+             "frac": lambda x: math.modf(x)[0],
+
+#             "ones": ,
+#             "twos": ,
+#             "not": ,
+
+              "sin⁻¹": None, # just for function menu
+              "cos⁻¹": None,
+              "sin⁻¹": None,
+              "tan⁻¹": None,
+              "sinh⁻¹": None,
+              "cosh⁻¹": None,
+              "tanh⁻¹": None,
+            }
+
 from random import random
-def update_rand(scene):
+def initialize_collection(scene):
     var = None
     for i in scene.calc_vars:
         if i.name == "rand":
@@ -75,6 +122,12 @@ def update_rand(scene):
         var = scene.calc_vars.add()
     var.name = "rand"
     var.val = str(random())
+
+    for i in sorted(func_dict.keys()):
+        func = scene.calc_funcs.add()
+        func.proto = i + "(x)"
+        func.define = "___builtin"
+        
 
 class CALC_UL_HistList(bpy.types.UIList):
     use_filter_show: False
@@ -88,16 +141,13 @@ class CALC_UL_HistList(bpy.types.UIList):
     def draw_filter(self, context, layout): # hide useless filter menus
         row = layout.row()
 
-import math
-from math import nan
-import numpy as np
-import cmath
 import re
+
 def calc_update(self, context):
     exp = self.calc_exp
 
     if not self.calc_is_inited:
-        update_rand(self)
+        initialize_collection(self)
         self.calc_is_inited = True
 
     exp = exp.replace("/", "÷") \
@@ -117,14 +167,59 @@ def calc_update(self, context):
     if (not self.calc_is_live) and exp[-1] != "=":
         return
 
+    reg = re.match("^\s*([a-zA-Z_]+\\([a-zA-Z_;\s]*\\))\s*=(.*)$", exp) # "f(; y) = y" is acceptable
+    rexp = None
+    if reg:
+        rexp = reg.group(2)
+    if rexp and re.match(".*[a-zA-Z_0-9\\.π].*", rexp):
+        # function define mode
+        proto = reg.group(1)
+        func_name = proto.split("(")[0]
+        if func_name in func_dict.keys():
+            return # don't overwrite builtin functions
+
+#        print(proto + ":::" + reg.group(2))
+        func = None
+        for i in self.calc_funcs:
+            if i.proto.split("(")[0] == func_name:
+                func = i
+        if not func:
+            func = self.calc_funcs.add()
+        func.proto = reg.group(1)
+        func.define = reg.group(2)
+        return
+
     exp = exp if exp[-1] != "=" else exp[0:-1]
     exp_re = re.split("^\s*([a-zA-Z_][a-zA-Z_0-9]*)=(.+)$", exp)
     exp_inner = exp if exp_re[0] else exp_re[2]
     var_name = exp_re[1] if len(exp_re) > 1 else None
 
+
+    for i in self.calc_funcs:
+        if i.define != "___builtin":
+            func_name = i.proto.split("(")[0]
+#            exp_inner.replace(func_name, "")
+            params = re.split("\s*;\s*", re.sub("^[a-zA-Z_]+\\(\s*(.*?)\s*\\)$", "\\1", i.proto))
+            reg = "(^|[^a-zA-Z_])" + func_name + "\\("
+            treg = "\\1(" + i.define
+            for n, param in enumerate(params):
+                reg +=  "([^;]*);"
+                if param == "":
+                    continue
+                treg = re.sub("(^|[^a-zA-Z_])" + param + "([^a-zA-Z_]|$)", "\\1"+"\\\\"+str(n+2)+"\\2", treg)
+#                print(str(n) + ":" + param)
+#                print(treg)
+            reg = reg[0:-1] + "\\)"
+            treg += ")"
+#            print(i.proto)
+#            print(reg)
+#            print(i.define)
+#            print(treg)
+            exp_inner = re.sub(reg, treg, exp_inner)
+
     dict = {}
     for i in self.calc_vars:
-            dict[i.name] = eval(i.val.replace("i", "j"))
+            dict[i.name] = eval(i.val.replace("i", "j").replace("jnf", "inf"))
 
     exp_inner = exp_inner.replace("^", "**")
 
@@ -169,51 +264,21 @@ def calc_update(self, context):
 # a=2
 # sqrt2a = 2.8284
 
-    exp_inner = re.sub("([0-9\\.]+|[a-zA-Z_]+)\s*!", " factorial(\\1)", exp_inner)
+    exp_inner = re.sub("([0-9\\.]+|[a-zA-Z_]+)\s*!", " ___factorial(\\1)", exp_inner)
 
     # Complex Number translation
     exp_inner = re.sub("(([^a-zA-Z_0-9\\.]+|^)[0-9\\.]+) \\* i([^a-zA-Z_]+|$)", "\\1j\\3", exp_inner)
 
 #    print(exp_inner)
 
-    dict |= {"sqrt": math.sqrt,
-             "factorial": lambda x: math.gamma(x + 1), # internal
-             "abs": math.fabs,
-             "log": np.log10,
-             "ln": np.log,
+    dict |= func_dict
+
+    dict |= {
+             "___factorial": lambda x: math.gamma(x + 1), # internal
              "___log": math.log,
              "___pi": math.pi,
              "e": math.e,
-             "re": lambda x: x.real,
-             "im": lambda x: x.imag,
-             "conj": np.conj,
-             "arg": lambda x: np.angle(x, deg=True),
-             "sin": lambda x: np.sin(np.deg2rad(x)), # TODO: complex number
-             "cos": lambda x: np.cos(np.deg2rad(x)), # TODO: complex number
-             "tan": lambda x: np.tan(np.deg2rad(x)), # TODO: complex number
-
-             "asin": lambda x: np.rad2deg(np.arcsin(x)), # TODO: complex number
-             "acos": lambda x: np.rad2deg(np.arccos(x)), # TODO: complex number
-             "atan": lambda x: np.rad2deg(np.arctan(x)), # TODO: complex number
-
-             "sinh": np.sinh,
-             "cosh": np.cosh,
-             "tanh": np.tanh,
-             "asinh": np.arcsinh,
-             "acosh": np.arccosh,
-             "atanh": np.arctanh,
-
-             "sgn": np.sign,
-             "round": np.round, # TODO: hmm... round(12.5) -> 12
-             "floor": np.floor,
-             "ceil": np.ceil,
-             "int": int,
-             "frac": lambda x: math.modf(x)[0],
-
-#             "ones": ,
-#             "twos": ,
-#             "not": ,
-            }
+    }
 
     try:
 #    if True:
@@ -348,7 +413,8 @@ class CALC_OT_HistClear(bpy.types.Operator):
         scene = context.scene
         scene.calc_hist.clear()
         scene.calc_vars.clear()
-        update_rand(scene)
+        scene.calc_funcs.clear()
+        initialize_collection(scene)
         return {'FINISHED'}
 
 class CALC_UL_VariablesList(bpy.types.UIList):
@@ -371,6 +437,28 @@ class CALC_MT_Variables(bpy.types.Menu):
         layout = self.layout
         scene = context.scene
         layout.template_list("CALC_UL_VariablesList", "", scene, "calc_vars", scene, "active_calc_vars_index")
+
+class CALC_UL_FunctionsList(bpy.types.UIList):
+    use_filter_show: False
+    def draw_item(self, context, layout, data, item, icon, active_data):
+        col = layout.column()
+        row = col.row(align=True)
+        row.label(text=item.proto + " = " + item.define)
+#        row.label(text=item.proto)
+#        row.label(text="", icon="FORWARD")
+#        row.prop(item, "define", text="")
+
+    def draw_filter(self, context, layout): # hide useless filter menus
+        row = layout.row()
+
+class CALC_MT_Functions(bpy.types.Menu):
+    bl_idname="CALC_MT_functions"
+    bl_label="Menu"
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        layout.template_list("CALC_UL_FunctionsList", "", scene, "calc_funcs", scene, "active_calc_funcs_index")
 
 class CALC_PT_CustomPanel(bpy.types.Panel):
     bl_label = "Calculator"
@@ -489,7 +577,7 @@ class CALC_PT_CustomPanel(bpy.types.Panel):
             row.operator(CALC_OT_Input_re.bl_idname, text="Re")
             row.operator(CALC_OT_Input_im.bl_idname, text="Im")
             row.operator(CALC_OT_Input_conj.bl_idname, text="conj")
-            row.label(text="") # placeholder
+            row.menu(CALC_MT_Functions.bl_idname, text="f(x)")
 
 
 class CALC_Hist_PropertiesGroup(bpy.types.PropertyGroup):
@@ -506,6 +594,10 @@ class CALC_Variable_PropertiesGroup(bpy.types.PropertyGroup):
     name: StringProperty(name="Variable Name", default="")
     val: StringProperty(name="Variable Value", default="")
 
+class CALC_Function_PropertiesGroup(bpy.types.PropertyGroup):
+    proto: StringProperty(name="Function Prototype", default="")
+    define: StringProperty(name="Function Define", default="")
+
 def update_superscript(self, context):
     if self.calc_is_superscript_input:
         self.calc_is_subscript_input = False
@@ -517,9 +609,12 @@ def update_subscript(self, context):
 def update_active_calc_vars_index(self, context):
     self.calc_exp += self.calc_vars[self.active_calc_vars_index].name
 
+def update_active_calc_funcs_index(self, context):
+    self.calc_exp += self.calc_funcs[self.active_calc_funcs_index].proto.split("(")[0]+"("
+
 def update_mode(self, context):
     if not self.calc_is_inited:
-        update_rand(self)
+        initialize_collection(self)
         self.calc_is_inited = True
 
 def init_props():
@@ -532,6 +627,10 @@ def init_props():
     scene.calc_vars = CollectionProperty(type=CALC_Variable_PropertiesGroup)
     scene.active_calc_vars_index = IntProperty(name="Active calculation variables index",
                                                update=update_active_calc_vars_index)
+
+    scene.calc_funcs = CollectionProperty(type=CALC_Function_PropertiesGroup)
+    scene.active_calc_funcs_index = IntProperty(name="Active calculation functions index",
+                                               update=update_active_calc_funcs_index)
 
     scene.calc_mode = EnumProperty(
         name="Calculator Mode",
@@ -566,6 +665,8 @@ def clear_props():
     del scene.active_calc_hist_index
     del scene.calc_vars
     del scene.active_calc_vars_index
+    del scene.calc_funcs
+    del scene.active_calc_funcs_index
     del scene.calc_mode
     del scene.calc_is_live
     del scene.calc_is_inited
@@ -578,6 +679,9 @@ classes = [
     CALC_Variable_PropertiesGroup,
     CALC_UL_VariablesList,
     CALC_MT_Variables,
+    CALC_Function_PropertiesGroup,
+    CALC_UL_FunctionsList,
+    CALC_MT_Functions,
     CALC_OT_ExpClear,
     CALC_OT_Input_0,
     CALC_OT_Input_1,
