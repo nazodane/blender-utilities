@@ -272,8 +272,7 @@ def calc_update(self, context):
     exp_inner = re.sub("([0-9\\.]+|[a-zA-Z_]+)\s*!", " ___factorial(\\1)", exp_inner)
 
     # Complex Number translation
-    exp_inner = re.sub("(([^a-zA-Z_0-9\\.]+|^)[0-9\\.]+) \\* i([^a-zA-Z_]+|$)", "\\1j\\3", exp_inner)
-
+    exp_inner = re.sub("(([^a-zA-Z_0-9\\.]+|^)[0-9\\.]+) \\* i(?![a-zA-Z_])", "\\1j", exp_inner)
 #    print(exp_inner)
 
     dict |= func_dict
