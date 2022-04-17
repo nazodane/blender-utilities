@@ -190,7 +190,7 @@ def calc_update(self, context):
             func = self.calc_funcs.add()
         func.proto = reg.group(1)
         func.define = reg.group(2)
-        return
+#        return
 
     exp = exp if exp[-1] != "=" else exp[0:-1]
     exp_re = re.split("^\s*([a-zA-Z_][a-zA-Z_0-9]*)=(.+)$", exp)
@@ -288,9 +288,12 @@ def calc_update(self, context):
 
     try:
 #    if True:
-        res = str(eval(exp_inner, {'__builtins__': dict})).replace("j", "i")
-        if res == exp:
-            return
+        if rexp:
+            res = "0"
+        else:
+            res = str(eval(exp_inner, {'__builtins__': dict})).replace("j", "i")
+            if res == exp:
+                return
 
         if var_name:
             var = None
