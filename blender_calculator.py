@@ -206,15 +206,15 @@ def calc_update(self, context):
                 reg +=  "([^;]*);"
                 if param == "":
                     continue
-                treg = re.sub("(^|[^a-zA-Z_])" + param + "([^a-zA-Z_]|$)", "\\1"+"\\\\"+str(n+2)+"\\2", treg)
+                treg = re.sub("(^|[^a-zA-Z_])" + param + "(?![a-zA-Z_])", "\\1"+"\\\\"+str(n+2), treg)
 #                print(str(n) + ":" + param)
 #                print(treg)
             reg = reg[0:-1] + "\\)"
             treg += ")"
-#            print(i.proto)
-#            print(reg)
-#            print(i.define)
-#            print(treg)
+            print(i.proto)
+            print(reg)
+            print(i.define)
+            print(treg)
             exp_inner = re.sub(reg, treg, exp_inner)
 
     dict = {}
@@ -282,8 +282,8 @@ def calc_update(self, context):
              "e": math.e,
     }
 
-    try:
-#    if True:
+#    try:
+    if True:
         res = str(eval(exp_inner, {'__builtins__': dict})).replace("j", "i")
         if res == exp:
             return
@@ -315,7 +315,7 @@ def calc_update(self, context):
 
         update_rand(self)
 
-    except: pass
+#    except: pass
 
 class CALC_OT_InputBase():
     bl_options = {'REGISTER', 'UNDO'}
