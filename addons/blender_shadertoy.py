@@ -29,7 +29,7 @@ bl_info = {
     "author": "Toshimitsu Kimura",
     "version": (1, 0),
     "blender": (3, 0, 0),
-    "location": "File > New > Shadertoy / Add Workspace > Shadertoy",
+    "location": "File > New > Shadertoy / Add Workspace > Shadertoy > Shadertoy",
     "description": "Shadertoy Viewer addon for Blender",
     "warning": "",
     "support": "COMMUNITY",
@@ -72,31 +72,22 @@ def shadertoy_draw():
         if not sc.name.startswith('Shadertoy'):
             return
 
-        if not "shadertoy_shader" in bpy.app.driver_namespace:
+        if not "shadertoy_shader_param" in bpy.app.driver_namespace:
             return
-        if not bpy.app.driver_namespace["shadertoy_shader"]:
+        if not bpy.app.driver_namespace["shadertoy_shader_param"]:
             return
 
-        shader = bpy.app.driver_namespace["shadertoy_shader"]
+        (shader, batch) = bpy.app.driver_namespace["shadertoy_shader_param"]
 
         rg = [[region for region in area.regions if region.type == "WINDOW"][0] \
             for area in sc.areas if area.type == "VIEW_3D"][0]
 
 #        print(rg)
 
-        vertices = (
-            (-1.0, -1.0), (1.0, -1.0),
-            (-1.0,  1.0), (1.0,  1.0))
-
-        indices = (
-            (0, 1, 2), (2, 1, 3))
-
         shader.bind()
         shader.uniform_float("iResolution", (rg.width, rg.height, 1.0)) # TODO: pixel aspect ratio
         shader.uniform_float("iTime", scene.frame_float/scene.render.fps)
 #        shader.uniform_int("iFrame", int(modf(scene.frame_float)[1]))
-
-        batch = batch_for_shader(shader, 'TRIS', {"pos":vertices}, indices=indices)
 
         # 描画
         batch.draw(shader)
@@ -172,7 +163,18 @@ void main(){
 }
 """)
 #    scene["code"] = code
-    bpy.app.driver_namespace["shadertoy_shader"] = shader
+
+    vertices = ((-1.0, -1.0), (1.0, -1.0), (-1.0,  1.0), (1.0,  1.0))
+    indices = ((0, 1, 2), (2, 1, 3))
+
+#    vbo_format = shader.format_calc()
+#    vbo = GPUVertBuf(vbo_format, 4)
+#    vbo.attr_fill("pos", vertices)
+#    ibo = GPUIndexBuf(type="TRIS", seq=indices)
+#    batch = GPUBatch(type="TRIS", buf=vbo, elem=ibo)
+    batch = batch_for_shader(shader, 'TRIS', {"pos":vertices}, indices=indices)
+
+    bpy.app.driver_namespace["shadertoy_shader_param"] = (shader, batch)
 
 #import addon_utils
 from pathlib import Path
@@ -191,7 +193,7 @@ def init_props():
         #self.report({"WARNING"}, 
         print("The Shadertoy Viewer addon will not work correctly: the application template is not installed. You should ensure to install the template to {BLENDER_USER_SCRIPTS}/startup/bl_app_templates_user directory.")
         # TODO: error reporting in GUI
-    bpy.app.driver_namespace["shadertoy_shader"] = None
+    bpy.app.driver_namespace["shadertoy_shader_param"] = None
 
 #    if not "Shadertoy" in bpy.data.workspaces:
 #        for mod in addon_utils.modules():
@@ -210,8 +212,8 @@ def clear_props():
     if "shadertoy_draw_handle" in bpy.app.driver_namespace:
         bpy.types.SpaceView3D.draw_handler_remove(bpy.app.driver_namespace["shadertoy_draw_handle"], 'WINDOW')
         del bpy.app.driver_namespace["shadertoy_draw_handle"]
-    if "shadertoy_shader" in bpy.app.driver_namespace:
-        del bpy.app.driver_namespace["shadertoy_shader"]
+    if "shadertoy_shader_param" in bpy.app.driver_namespace:
+        del bpy.app.driver_namespace["shadertoy_shader_param"]
 
 classes = [
 ]
