@@ -29,7 +29,7 @@ bl_info = {
     "author": "Toshimitsu Kimura",
     "version": (1, 0),
     "blender": (3, 0, 0),
-    "location": "Template > Shadertoy",
+    "location": "File > New > Shadertoy / Add Workspace > Shadertoy",
     "description": "Shadertoy Viewer addon for Blender",
     "warning": "",
     "support": "COMMUNITY",
