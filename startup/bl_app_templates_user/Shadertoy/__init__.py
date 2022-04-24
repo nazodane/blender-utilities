@@ -26,6 +26,7 @@ def load_handler(_):
     import bpy
     import addon_utils
     addon_utils.enable("blender_shadertoy")
+    bpy.data.scenes[0].frame_end = 1048574
 
 
 def register():
