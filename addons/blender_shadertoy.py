@@ -148,6 +148,12 @@ void main(){
 
     bpy.app.driver_namespace["shadertoy_shader_param"] = (shader, batch)
 
+    scene.render.engine = "SHADERTOY_ENGINE"
+    sc = context.screen
+    for spaces in [area.spaces[0] for area in sc.areas if area.type == "VIEW_3D"]:
+        spaces.shading.type = "RENDERED"
+
+
 class ShadertoyRenderEngine(bpy.types.RenderEngine):
     bl_idname = 'SHADERTOY_ENGINE'
     bl_label = 'Shadertoy Engine'
@@ -170,7 +176,6 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
         pass
 
     def view_draw(self, context, depsgraph):
-        sc = context.screen
         scene = context.scene
         region = context.region
 
