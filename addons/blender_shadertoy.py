@@ -180,12 +180,15 @@ def shadertoy_shader_update(self, context):
 from pathlib import Path
 
 def init_props():
+    clear_props()
     scene = bpy.types.Scene
     scene.shadertoy_id = StringProperty(name="Shadertoy ID", 
                                           default="",
                                           update=shadertoy_shader_update)
+    bpy.app.driver_namespace["shadertoy_inputmenu_handle"] = shadertoy_inputmenu
     bpy.types.TEXT_HT_header.append(shadertoy_inputmenu)
-    bpy.types.SpaceView3D.draw_handler_add(shadertoy_draw, (), 'WINDOW', 'POST_PIXEL')
+    bpy.app.driver_namespace["shadertoy_draw_handle"] = \
+        bpy.types.SpaceView3D.draw_handler_add(shadertoy_draw, (), 'WINDOW', 'POST_PIXEL')
     if not Path(bpy.utils.script_path_user() + "/startup/bl_app_templates_user/Shadertoy/startup.blend").exists():
         #self.report({"WARNING"}, 
         print("The Shadertoy Viewer addon will not work correctly: the application template is not installed. You should ensure to install the template to {BLENDER_USER_SCRIPTS}/startup/bl_app_templates_user directory.")
@@ -200,11 +203,14 @@ def init_props():
 
 def clear_props():
     scene = bpy.types.Scene
-    bpy.types.TEXT_HT_header.remove(shadertoy_inputmenu)
-    del scene.shadertoy_id
-    try:
-        bpy.types.SpaceView3D.draw_handler_remove(shadertoy_draw, 'WINDOW')
-    except: pass
+    if "shadertoy_inputmenu_handle" in bpy.app.driver_namespace:
+        bpy.types.TEXT_HT_header.remove(bpy.app.driver_namespace["shadertoy_inputmenu_handle"])
+        del bpy.app.driver_namespace["shadertoy_inputmenu_handle"]
+    if hasattr(scene, "shadertoy_id"):
+        del scene.shadertoy_id
+    if "shadertoy_draw_handle" in bpy.app.driver_namespace:
+        bpy.types.SpaceView3D.draw_handler_remove(bpy.app.driver_namespace["shadertoy_draw_handle"], 'WINDOW')
+        del bpy.app.driver_namespace["shadertoy_draw_handle"]
 
 classes = [
 ]
