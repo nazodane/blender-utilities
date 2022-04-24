@@ -64,8 +64,6 @@ import json
 import time
 from math import modf
 
-shader = None
-
 def shadertoy_draw():
     if True:
         sc = bpy.context.screen
@@ -73,38 +71,13 @@ def shadertoy_draw():
 #        print(sc.name)
         if not sc.name.startswith('Shadertoy'):
             return
-#        if not "shader" in scene or not scene["shader"]:
-#            return
-#        shader = scene["shader"]
 
-        if not "code" in scene:
+        if not "shadertoy_shader" in bpy.app.driver_namespace:
             return
-        code = scene["code"]
+        if not bpy.app.driver_namespace["shadertoy_shader"]:
+            return
 
-        shader = gpu.types.GPUShader("""
-in vec2 pos;
-void main()
-{
-   gl_Position = vec4(pos, 0.0, 1.0);
-}
-""", """
-out vec4 FragColor; // todo: compatible name
-
-uniform vec3 iResolution;
-uniform float iTime;
-//uniform float iTimeDelta;
-uniform int iFrame;
-//uniform float iChannelTime[4];
-//uniform vec3 iChannelResolution[4];
-//uniform vec4 iMouse;
-//uniform samplerXX iChannel0..3;
-//uniform vec4 iDate;
-//uniform float iSampleRate;
-""" + code + """
-void main(){
-    mainImage(FragColor, gl_FragCoord.xy);
-}
-""")
+        shader = bpy.app.driver_namespace["shadertoy_shader"]
 
         rg = [[region for region in area.regions if region.type == "WINDOW"][0] \
             for area in sc.areas if area.type == "VIEW_3D"][0]
@@ -165,7 +138,6 @@ def shadertoy_shader_update(self, context):
     txt.write(code)
     context.space_data.text = txt
 
-    scene["code"] = code
 #    code = """
 #void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 #  fragColor = vec4(1.0, 0.0, 0.0, 1.0);
@@ -175,6 +147,32 @@ def shadertoy_shader_update(self, context):
     # https://www.shadertoy.com/view/3sySRK -> ok
     # https://www.shadertoy.com/view/MdX3zr -> ok
 
+    shader = gpu.types.GPUShader("""
+in vec2 pos;
+void main()
+{
+   gl_Position = vec4(pos, 0.0, 1.0);
+}
+""", """
+out vec4 FragColor; // todo: compatible name
+
+uniform vec3 iResolution;
+uniform float iTime;
+//uniform float iTimeDelta;
+uniform int iFrame;
+//uniform float iChannelTime[4];
+//uniform vec3 iChannelResolution[4];
+//uniform vec4 iMouse;
+//uniform samplerXX iChannel0..3;
+//uniform vec4 iDate;
+//uniform float iSampleRate;
+""" + code + """
+void main(){
+    mainImage(FragColor, gl_FragCoord.xy);
+}
+""")
+#    scene["code"] = code
+    bpy.app.driver_namespace["shadertoy_shader"] = shader
 
 #import addon_utils
 from pathlib import Path
@@ -193,6 +191,7 @@ def init_props():
         #self.report({"WARNING"}, 
         print("The Shadertoy Viewer addon will not work correctly: the application template is not installed. You should ensure to install the template to {BLENDER_USER_SCRIPTS}/startup/bl_app_templates_user directory.")
         # TODO: error reporting in GUI
+    bpy.app.driver_namespace["shadertoy_shader"] = None
 
 #    if not "Shadertoy" in bpy.data.workspaces:
 #        for mod in addon_utils.modules():
@@ -211,6 +210,8 @@ def clear_props():
     if "shadertoy_draw_handle" in bpy.app.driver_namespace:
         bpy.types.SpaceView3D.draw_handler_remove(bpy.app.driver_namespace["shadertoy_draw_handle"], 'WINDOW')
         del bpy.app.driver_namespace["shadertoy_draw_handle"]
+    if "shadertoy_shader" in bpy.app.driver_namespace:
+        del bpy.app.driver_namespace["shadertoy_shader"]
 
 classes = [
 ]
