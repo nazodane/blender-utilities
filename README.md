@@ -15,3 +15,10 @@ The hash addon is my recreation of [GtkHash 1.2](https://github.com/tristanheave
 The calculator addon is my recreation of [Gnome Calculator](https://wiki.gnome.org/Apps/Calculator) but less functional. It just needs more love. The source code is *not* based on Gnome Calculator.
 
 ![Screenshot of Calculator addon](screenshot_calculator.png)
+
+## Shadertoy Viewer addon for Blender
+The shadertoy viewer addon is currently just a [Shadertoy](https://www.shadertoy.com/) viewer in Blender. The viewer supports basic Shadertoy shaders.
+
+The addon will not become the alternative of [Synthclipse](http://synthclipse.sourceforge.net/) because of Blender API limitations but more advanced features would be possible.
+
+![Screenshot of Shadertoy Viewer](screenshot_shadertoy.png)
