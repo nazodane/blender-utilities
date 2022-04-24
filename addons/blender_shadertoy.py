@@ -64,36 +64,6 @@ import json
 import time
 from math import modf
 
-def shadertoy_draw():
-    if True:
-        sc = bpy.context.screen
-        scene = bpy.context.scene
-#        print(sc.name)
-        if not sc.name.startswith('Shadertoy'):
-            return
-
-        if not "shadertoy_shader_param" in bpy.app.driver_namespace:
-            return
-        if not bpy.app.driver_namespace["shadertoy_shader_param"]:
-            return
-
-        (shader, batch) = bpy.app.driver_namespace["shadertoy_shader_param"]
-
-        rg = [[region for region in area.regions if region.type == "WINDOW"][0] \
-            for area in sc.areas if area.type == "VIEW_3D"][0]
-
-#        print(rg)
-
-        shader.bind()
-        shader.uniform_float("iResolution", (rg.width, rg.height, 1.0)) # TODO: pixel aspect ratio
-        shader.uniform_float("iTime", scene.frame_float/scene.render.fps)
-#        shader.uniform_int("iFrame", int(modf(scene.frame_float)[1]))
-
-        # 描画
-        batch.draw(shader)
-
-
-
 def shadertoy_inputmenu(self, context):
     layout = self.layout
     scene = context.scene
@@ -159,7 +129,9 @@ uniform int iFrame;
 //uniform float iSampleRate;
 """ + code + """
 void main(){
-    mainImage(FragColor, gl_FragCoord.xy);
+    vec4 _fragColor;
+    mainImage(_fragColor, gl_FragCoord.xy);
+    FragColor = vec4(_fragColor.xyz, 1.0);
 }
 """)
 #    scene["code"] = code
@@ -176,6 +148,49 @@ void main(){
 
     bpy.app.driver_namespace["shadertoy_shader_param"] = (shader, batch)
 
+class ShadertoyRenderEngine(bpy.types.RenderEngine):
+    bl_idname = 'SHADERTOY_ENGINE'
+    bl_label = 'Shadertoy Engine'
+
+    bl_use_image_save = False
+
+    # def update(self, data=None, depsgraph=None):
+    #    pass
+
+    # def render(self, depsgraph):
+    #    pass
+
+    # def render_frame_finish(self):
+    #    pass
+
+    # def draw(self, context, depsgraph):
+    #    pass
+
+    def view_update(self, context, depsgraph):
+        pass
+
+    def view_draw(self, context, depsgraph):
+        sc = context.screen
+        scene = context.scene
+        region = context.region
+
+        if not "shadertoy_shader_param" in bpy.app.driver_namespace:
+            return
+        if not bpy.app.driver_namespace["shadertoy_shader_param"]:
+            return
+
+        (shader, batch) = bpy.app.driver_namespace["shadertoy_shader_param"]
+        gpu.state.blend_set('ALPHA_PREMULT')
+        shader.bind()
+        shader.uniform_float("iResolution", (region.width, region.height, 1.0)) # TODO: pixel aspect ratio
+        shader.uniform_float("iTime", scene.frame_float/scene.render.fps)
+#        shader.uniform_int("iFrame", int(modf(scene.frame_float)[1]))
+
+        # 描画
+        batch.draw(shader)
+        gpu.state.blend_set('NONE')
+
+
 #import addon_utils
 from pathlib import Path
 
@@ -187,8 +202,6 @@ def init_props():
                                           update=shadertoy_shader_update)
     bpy.app.driver_namespace["shadertoy_inputmenu_handle"] = shadertoy_inputmenu
     bpy.types.TEXT_HT_header.append(shadertoy_inputmenu)
-    bpy.app.driver_namespace["shadertoy_draw_handle"] = \
-        bpy.types.SpaceView3D.draw_handler_add(shadertoy_draw, (), 'WINDOW', 'POST_PIXEL')
     if not Path(bpy.utils.script_path_user() + "/startup/bl_app_templates_user/Shadertoy/startup.blend").exists():
         #self.report({"WARNING"}, 
         print("The Shadertoy Viewer addon will not work correctly: the application template is not installed. You should ensure to install the template to {BLENDER_USER_SCRIPTS}/startup/bl_app_templates_user directory.")
@@ -209,13 +222,11 @@ def clear_props():
         del bpy.app.driver_namespace["shadertoy_inputmenu_handle"]
     if hasattr(scene, "shadertoy_id"):
         del scene.shadertoy_id
-    if "shadertoy_draw_handle" in bpy.app.driver_namespace:
-        bpy.types.SpaceView3D.draw_handler_remove(bpy.app.driver_namespace["shadertoy_draw_handle"], 'WINDOW')
-        del bpy.app.driver_namespace["shadertoy_draw_handle"]
     if "shadertoy_shader_param" in bpy.app.driver_namespace:
         del bpy.app.driver_namespace["shadertoy_shader_param"]
 
 classes = [
+    ShadertoyRenderEngine,
 ]
 
 def register():
