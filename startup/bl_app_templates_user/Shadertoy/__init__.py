@@ -29,7 +29,8 @@ def load_handler(_):
     bpy.data.scenes[0].render.engine = "SHADERTOY_ENGINE"
     bpy.data.screens["Shadertoy"].areas[0].spaces[0].shading.type = "RENDERED"
     bpy.data.scenes[0].frame_end = 1048574
-
+    bpy.data.scenes[0].render.fps = 240
+    bpy.data.scenes[0].sync_mode = "FRAME_DROP"
 
 def register():
     bpy.app.handlers.load_factory_startup_post.append(load_handler)
