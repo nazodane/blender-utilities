@@ -150,8 +150,28 @@ void main(){
 
     scene.render.engine = "SHADERTOY_ENGINE"
     sc = context.screen
-    for spaces in [area.spaces[0] for area in sc.areas if area.type == "VIEW_3D"]:
-        spaces.shading.type = "RENDERED"
+    for space in [area.spaces[0] for area in sc.areas if area.type == "VIEW_3D"]:
+        space.shading.type = "RENDERED"
+        space.overlay.show_overlays = False
+        space.show_gizmo = False
+        space.show_object_viewport_mesh = False
+        space.show_object_viewport_curve = False
+        space.show_object_viewport_surf = False
+        space.show_object_viewport_meta = False
+        space.show_object_viewport_font = False
+        space.show_object_viewport_pointcloud = False
+        space.show_object_viewport_volume = False
+        space.show_object_viewport_grease_pencil = False
+        space.show_object_viewport_armature = False
+        space.show_object_viewport_lattice = False
+        space.show_object_viewport_empty = False
+        space.show_object_viewport_light = False
+        space.show_object_viewport_light_probe = False
+        space.show_object_viewport_camera = False
+        space.show_object_viewport_speaker = False
+        space.show_region_tool_header = False
+        space.show_region_header = False
+
 
 
 class ShadertoyRenderEngine(bpy.types.RenderEngine):
