@@ -142,6 +142,7 @@ void main(){
     driver_namespace["shadertoy_shader_param"] = (shader, batch)
 
     scene.render.engine = "SHADERTOY_ENGINE"
+    scene.display_settings.display_device = 'None'
     sc = context.screen
     for (area, space) in [(area, area.spaces[0]) for area in sc.areas if area.type == "VIEW_3D"]:
         space.shading.type = "RENDERED"

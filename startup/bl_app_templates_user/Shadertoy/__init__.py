@@ -27,6 +27,7 @@ def load_handler(_):
     import addon_utils
     addon_utils.enable("blender_shadertoy")
     bpy.data.scenes[0].render.engine = "SHADERTOY_ENGINE"
+    bpy.data.scenes[0].display_settings.display_device = 'None'
     bpy.data.screens["Shadertoy"].areas[0].spaces[0].shading.type = "RENDERED"
     bpy.data.scenes[0].frame_end = 1048574
     bpy.data.scenes[0].render.fps = 240
