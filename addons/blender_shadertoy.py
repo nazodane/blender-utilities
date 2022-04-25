@@ -123,7 +123,7 @@ uniform float iTime;
 uniform int iFrame;
 //uniform float iChannelTime[4];
 //uniform vec3 iChannelResolution[4];
-//uniform vec4 iMouse;
+uniform vec4 iMouse;
 //uniform samplerXX iChannel0..3;
 //uniform vec4 iDate;
 //uniform float iSampleRate;
@@ -150,7 +150,7 @@ void main(){
 
     scene.render.engine = "SHADERTOY_ENGINE"
     sc = context.screen
-    for space in [area.spaces[0] for area in sc.areas if area.type == "VIEW_3D"]:
+    for (area, space) in [(area, area.spaces[0]) for area in sc.areas if area.type == "VIEW_3D"]:
         space.shading.type = "RENDERED"
         space.overlay.show_overlays = False
         space.show_gizmo = False
@@ -171,8 +171,15 @@ void main(){
         space.show_object_viewport_speaker = False
         space.show_region_tool_header = False
         space.show_region_header = False
+        space.show_region_ui = False
 
+        override_context = context.copy()
+        override_context['area'] = area
+        override_context['region'] = area.regions[-1]
+        override_context['space_data'] = space
+        bpy.ops.wm.tool_set_by_id(override_context, name='shadertoy.shadertoy_tool')
 
+        space.show_region_toolbar = False
 
 class ShadertoyRenderEngine(bpy.types.RenderEngine):
     bl_idname = 'SHADERTOY_ENGINE'
@@ -198,22 +205,63 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
     def view_draw(self, context, depsgraph):
         scene = context.scene
         region = context.region
+        screen = context.screen
 
-        if not "shadertoy_shader_param" in bpy.app.driver_namespace:
-            return
-        if not bpy.app.driver_namespace["shadertoy_shader_param"]:
+        param = bpy.app.driver_namespace["shadertoy_shader_param"]
+        if not param:
             return
 
-        (shader, batch) = bpy.app.driver_namespace["shadertoy_shader_param"]
+        (shader, batch) = param
         gpu.state.blend_set('ALPHA_PREMULT')
         shader.bind()
-        shader.uniform_float("iResolution", (region.width, region.height, 1.0)) # TODO: pixel aspect ratio
-        shader.uniform_float("iTime", scene.frame_float/scene.render.fps)
-#        shader.uniform_int("iFrame", int(modf(scene.frame_float)[1]))
+        try:
+            shader.uniform_float("iResolution", (region.width, region.height, 1.0)) # TODO: pixel aspect ratio
+        except: pass
+        try:
+            shader.uniform_float("iTime", scene.frame_float/scene.render.fps)
+        except: pass
+        try:
+            shader.uniform_float("iMouse", bpy.app.driver_namespace["shadertoy_mouse"])
+        except: pass
+        try:
+            shader.uniform_int("iFrame", int(modf(scene.frame_float)[1]))
+        except: pass
 
         # 描画
         batch.draw(shader)
         gpu.state.blend_set('NONE')
+
+class ShadertoyModalOperator(bpy.types.Operator):
+    bl_idname = "shadertoy.modal_operator"
+    bl_label = "Shadertoy Modal Operator"
+
+    def invoke(self, context, event):
+        scene = context.scene
+#        print("click");
+        bpy.app.driver_namespace["shadertoy_mouse"][0] = \
+        bpy.app.driver_namespace["shadertoy_mouse"][2] = event.mouse_region_x
+        bpy.app.driver_namespace["shadertoy_mouse"][1] = \
+        bpy.app.driver_namespace["shadertoy_mouse"][3] = event.mouse_region_y
+        context.window_manager.modal_handler_add(self)
+
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        return {'FINISHED'}
+
+    def modal(self, context, event):
+#        print("modal");
+        bpy.app.driver_namespace["shadertoy_mouse"][0] = event.mouse_region_x
+        bpy.app.driver_namespace["shadertoy_mouse"][1] = event.mouse_region_y
+        if bpy.app.driver_namespace["shadertoy_mouse"][3] > 0:
+            bpy.app.driver_namespace["shadertoy_mouse"][3] = -bpy.app.driver_namespace["shadertoy_mouse"][3]
+        if event.value == 'RELEASE':
+            bpy.app.driver_namespace["shadertoy_mouse"][2] = \
+                -bpy.app.driver_namespace["shadertoy_mouse"][2];
+#            print("released");
+            return {'FINISHED'}
+
+        return {'RUNNING_MODAL'}
 
 
 #import addon_utils
@@ -232,7 +280,7 @@ def init_props():
         print("The Shadertoy Viewer addon will not work correctly: the application template is not installed. You should ensure to install the template to {BLENDER_USER_SCRIPTS}/startup/bl_app_templates_user directory.")
         # TODO: error reporting in GUI
     bpy.app.driver_namespace["shadertoy_shader_param"] = None
-
+    bpy.app.driver_namespace["shadertoy_mouse"] = [0, 0, 0, 0]
 #    if not "Shadertoy" in bpy.data.workspaces:
 #        for mod in addon_utils.modules():
 #            if mod.bl_info['name'] == "Shadertoy Viewer":
@@ -249,20 +297,37 @@ def clear_props():
         del scene.shadertoy_id
     if "shadertoy_shader_param" in bpy.app.driver_namespace:
         del bpy.app.driver_namespace["shadertoy_shader_param"]
+    if "shadertoy_mouse" in bpy.app.driver_namespace:
+        del bpy.app.driver_namespace["shadertoy_mouse"]
+
+class ShadertoyTool(bpy.types.WorkSpaceTool):  
+    bl_space_type = 'VIEW_3D'
+    bl_context_mode = 'OBJECT'
+    bl_idname = "shadertoy.shadertoy_tool"
+    bl_label = " Shadertoy Tool"
+    bl_description = ("Mouse and keyboard capture for Shadertoy shader evaluation")
+    bl_icon =  "SHADERFX"          
+    bl_widget = None
+    bl_keymap = (
+        ("shadertoy.modal_operator", {"type": 'LEFTMOUSE', "value": 'PRESS'}, {}),
+    )
 
 classes = [
     ShadertoyRenderEngine,
+    ShadertoyModalOperator,
 ]
 
 def register():
     for c in classes:
         bpy.utils.register_class(c)
     init_props()
+    bpy.utils.register_tool(ShadertoyTool, after=None, separator=True, group=False)
 
 def unregister():
     clear_props()
     for c in classes:
         bpy.utils.unregister_class(c)
+    bpy.utils.unregister_tool(ShadertoyTool)
 
 if __name__ == "__main__":
     register()
