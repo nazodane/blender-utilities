@@ -98,6 +98,7 @@ def shadertoy_shader_update(self, context):
     # https://www.shadertoy.com/view/MdX3zr -> ok
     # https://www.shadertoy.com/view/Mss3zH (iMouse) -> ok
     # https://www.shadertoy.com/view/lsKGWV (iTimeDelta/iFrameRate) -> ok
+    # https://www.shadertoy.com/view/WdtyRs (iDate) -> ok
 
     shader = gpu.types.GPUShader("""
 in vec2 pos;
@@ -117,7 +118,7 @@ uniform float iFrameRate;
 //uniform vec3 iChannelResolution[4];
 uniform vec4 iMouse;
 //uniform samplerXX iChannel0..3;
-//uniform vec4 iDate;
+uniform vec4 iDate;
 //uniform float iSampleRate;
 """ + code + """
 void main(){
@@ -177,6 +178,8 @@ void main(){
     driver_namespace["shadertoy_framecount"] = 0
     driver_namespace["shadertoy_startclock"] = 0.0
 
+import datetime
+
 class ShadertoyRenderEngine(bpy.types.RenderEngine):
     bl_idname = 'SHADERTOY_ENGINE'
     bl_label = 'Shadertoy Engine'
@@ -211,6 +214,11 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
             shader.uniform_int("iFrame", int(modf(scene.frame_float)[1]))
         except: pass
 
+        now = datetime.datetime.now()
+        try:
+            shader.uniform_float("iDate", (now.year, now.month-1, \
+                now.day, now.hour * 60 * 60 +  now.minute * 60 + now.second + now.microsecond*0.000001))
+        except: pass
 
         t = time.perf_counter()
         tdelta = t - driver_namespace["shadertoy_clock"]
