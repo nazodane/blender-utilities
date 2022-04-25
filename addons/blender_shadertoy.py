@@ -119,8 +119,9 @@ out vec4 FragColor; // todo: compatible name
 
 uniform vec3 iResolution;
 uniform float iTime;
-//uniform float iTimeDelta;
+uniform float iTimeDelta;
 uniform int iFrame;
+uniform float iFrameRate;
 //uniform float iChannelTime[4];
 //uniform vec3 iChannelResolution[4];
 uniform vec4 iMouse;
@@ -181,6 +182,10 @@ void main(){
 
         space.show_region_toolbar = False
 
+    bpy.app.driver_namespace["shadertoy_clock"] = 0.0
+    bpy.app.driver_namespace["shadertoy_framecount"] = 0
+    bpy.app.driver_namespace["shadertoy_startclock"] = 0.0
+
 class ShadertoyRenderEngine(bpy.types.RenderEngine):
     bl_idname = 'SHADERTOY_ENGINE'
     bl_label = 'Shadertoy Engine'
@@ -227,9 +232,26 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
             shader.uniform_int("iFrame", int(modf(scene.frame_float)[1]))
         except: pass
 
+
+        t = time.perf_counter()
+        tdelta = t - bpy.app.driver_namespace["shadertoy_clock"]
+        if tdelta >= 1.0 or bpy.app.driver_namespace["shadertoy_framecount"] == 0:
+            bpy.app.driver_namespace["shadertoy_framecount"] = 0
+            bpy.app.driver_namespace["shadertoy_startclock"] = time.perf_counter()
+        try:
+            shader.uniform_float("iTimeDelta", tdelta)
+        except: pass
+        try:
+            shader.uniform_float("iFrameRate", bpy.app.driver_namespace["shadertoy_framecount"] / \
+                (t - bpy.app.driver_namespace["shadertoy_startclock"]))
+        except: pass
+        bpy.app.driver_namespace["shadertoy_clock"] = time.perf_counter()
+        bpy.app.driver_namespace["shadertoy_framecount"] += 1
+
         # 描画
         batch.draw(shader)
         gpu.state.blend_set('NONE')
+
 
 class ShadertoyModalOperator(bpy.types.Operator):
     bl_idname = "shadertoy.modal_operator"
@@ -281,6 +303,9 @@ def init_props():
         # TODO: error reporting in GUI
     bpy.app.driver_namespace["shadertoy_shader_param"] = None
     bpy.app.driver_namespace["shadertoy_mouse"] = [0, 0, 0, 0]
+    bpy.app.driver_namespace["shadertoy_clock"] = 0.0
+    bpy.app.driver_namespace["shadertoy_framecount"] = 0
+    bpy.app.driver_namespace["shadertoy_startclock"] = 0.0
 #    if not "Shadertoy" in bpy.data.workspaces:
 #        for mod in addon_utils.modules():
 #            if mod.bl_info['name'] == "Shadertoy Viewer":
@@ -299,6 +324,12 @@ def clear_props():
         del bpy.app.driver_namespace["shadertoy_shader_param"]
     if "shadertoy_mouse" in bpy.app.driver_namespace:
         del bpy.app.driver_namespace["shadertoy_mouse"]
+    if "shadertoy_clock" in bpy.app.driver_namespace:
+        del bpy.app.driver_namespace["shadertoy_clock"]
+    if "shadertoy_framecount" in bpy.app.driver_namespace:
+        del bpy.app.driver_namespace["shadertoy_framecount"]
+    if "shadertoy_startclock" in bpy.app.driver_namespace:
+        del bpy.app.driver_namespace["shadertoy_startclock"]
 
 class ShadertoyTool(bpy.types.WorkSpaceTool):  
     bl_space_type = 'VIEW_3D'
