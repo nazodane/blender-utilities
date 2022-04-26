@@ -263,6 +263,10 @@ def shadertoy_shader_update(self, context):
     rpass =(db[0]["renderpass"] if "renderpass" in db[0] else []) if len(db) else []
     print(rpass)
 
+    scene.shadertoy_tex1 = \
+    scene.shadertoy_tex2 = \
+    scene.shadertoy_tex3 = \
+    scene.shadertoy_tex4 = "none.png"
     intputs = (rpass[0]["inputs"] if "inputs" in rpass[0] else []) if len(rpass) else []
     for i in intputs:
         if "type" in i and i["type"] == "texture" and "filepath" in i:
