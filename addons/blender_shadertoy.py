@@ -296,6 +296,7 @@ def shadertoy_shader_update(self, context):
     # https://www.shadertoy.com/view/lsKGWV (iTimeDelta/iFrameRate) -> ok
     # https://www.shadertoy.com/view/WdtyRs (iDate) -> ok
     # https://www.shadertoy.com/view/tdSSzV (2d texture) -> ok
+    # https://www.shadertoy.com/view/MsXGz8 (iChannelTime) -> ok
 
     shader = gpu.types.GPUShader("""
 in vec2 pos;
@@ -311,7 +312,7 @@ uniform float iTime;
 uniform float iTimeDelta;
 uniform int iFrame;
 uniform float iFrameRate;
-//uniform float iChannelTime[4];
+uniform float iChannelTime[4];
 //uniform vec3 iChannelResolution[4];
 uniform vec4 iMouse;
 uniform sampler2D iChannel0;
@@ -414,8 +415,9 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
         try:
             shader.uniform_float("iResolution", (region.width, region.height, 1.0)) # TODO: pixel aspect ratio
         except: pass
+        t = scene.frame_float/scene.render.fps
         try:
-            shader.uniform_float("iTime", scene.frame_float/scene.render.fps)
+            shader.uniform_float("iTime", t)
         except: pass
         try:
             shader.uniform_float("iMouse", driver_namespace["shadertoy_mouse"])
@@ -457,7 +459,9 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
         tex4 = driver_namespace["shadertoy_tex4"]
         if tex4:
             shader.uniform_sampler("iChannel3", tex4)
-
+        try:
+            shader.uniform_float("iChannelTime", (t, t, t, t))
+        except: pass
 
         # 描画
         batch.draw(shader)
