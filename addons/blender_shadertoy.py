@@ -297,6 +297,7 @@ def shadertoy_shader_update(self, context):
     # https://www.shadertoy.com/view/WdtyRs (iDate) -> ok
     # https://www.shadertoy.com/view/tdSSzV (2d texture) -> ok
     # https://www.shadertoy.com/view/MsXGz8 (iChannelTime) -> ok
+    # https://www.shadertoy.com/view/4s2Xzc (iChannelResolution) -> ok
 
     shader = gpu.types.GPUShader("""
 in vec2 pos;
@@ -313,7 +314,7 @@ uniform float iTimeDelta;
 uniform int iFrame;
 uniform float iFrameRate;
 uniform float iChannelTime[4];
-//uniform vec3 iChannelResolution[4];
+uniform vec3 iChannelResolution[4];
 uniform vec4 iMouse;
 uniform sampler2D iChannel0;
 uniform sampler2D iChannel1;
@@ -461,6 +462,15 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
             shader.uniform_sampler("iChannel3", tex4)
         try:
             shader.uniform_float("iChannelTime", (t, t, t, t))
+        except: pass
+
+        try:
+            shader.uniform_float("iChannelResolution", [
+                (driver_namespace["shadertoy_tex1"].width, driver_namespace["shadertoy_tex1"].height, 1.0),
+                (driver_namespace["shadertoy_tex2"].width, driver_namespace["shadertoy_tex2"].height, 1.0),
+                (driver_namespace["shadertoy_tex3"].width, driver_namespace["shadertoy_tex3"].height, 1.0),
+                (driver_namespace["shadertoy_tex4"].width, driver_namespace["shadertoy_tex4"].height, 1.0),
+            ])
         except: pass
 
         # 描画
