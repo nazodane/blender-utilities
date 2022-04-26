@@ -143,6 +143,10 @@ void main(){
 
     scene.render.engine = "SHADERTOY_ENGINE"
     scene.display_settings.display_device = 'None'
+    scene.frame_end = 1048574
+    scene.render.fps = 240
+    scene.sync_mode = "FRAME_DROP"
+
     sc = context.screen
     for (area, space) in [(area, area.spaces[0]) for area in sc.areas if area.type == "VIEW_3D"]:
         space.shading.type = "RENDERED"
@@ -178,6 +182,8 @@ void main(){
     driver_namespace["shadertoy_clock"] = 0.0
     driver_namespace["shadertoy_framecount"] = 0
     driver_namespace["shadertoy_startclock"] = 0.0
+
+    bpy.ops.screen.animation_play()
 
 import datetime
 
