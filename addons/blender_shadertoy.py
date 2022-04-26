@@ -180,7 +180,7 @@ def shadertoy_media_download():
 
     for t in (shadertoy_medias + shadertoy_cubemaps + shadertoy_previs):
         # preview download
-        fpath = os.path.join(prev_d, t[0])
+        fpath = os.path.join(prev_d, re.sub("(\\.ogv|\\.webm)$", "\\1.gif", t[0]))
         if not os.path.exists(fpath): 
             print("shadertoy_media_download: preview downloading: " + t[0])
             if len(t) > 2:
@@ -224,7 +224,7 @@ def checksum_generator():
     if not os.path.exists(data_d):
         os.mkdir(data_d)
     for t in (shadertoy_medias + shadertoy_cubemaps + shadertoy_previs):
-        p_fpath = os.path.join(prev_d, t[0])
+        p_fpath = os.path.join(prev_d, re.sub("(\\.ogv|\\.webm)$", "\\1.gif", t[0]))
         p_data = open(p_fpath, 'rb').read()
         line = '("' + t[0] + '", "' + sha1(p_data).hexdigest()
         for i, h in enumerate(t[2:]):
@@ -470,9 +470,6 @@ def shadertoy_generate_tex_preview():
         fpath = os.path.join(image_location, img)
         thumb = None
         if fpath not in p:
-#            if fpath.endswith((".ogv", ".webm")): # GIF images
-#                thumb = p.load(fpath, fpath, 'MOVIE')
-#            else:
             thumb = p.load(fpath, fpath, 'IMAGE')
         else:
             thumb = p[fpath]
