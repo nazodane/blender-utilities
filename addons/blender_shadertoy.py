@@ -465,15 +465,17 @@ def shadertoy_generate_tex_preview():
     image_location = p.images_location
     enum_items = []
 
-#    p.clear()
-    for i, img in enumerate(os.listdir(image_location)):
-        fpath = os.path.join(image_location, img)
+    for i, img in enumerate([("none.png",)] + shadertoy_previs + shadertoy_cubemaps + shadertoy_medias):
+        fpath = os.path.join(image_location, re.sub("(\\.ogv|\\.webm)$", "\\1.gif", img[0]))
+#        print(fpath)
+        if not os.path.exists(fpath):
+            continue
         thumb = None
         if fpath not in p:
             thumb = p.load(fpath, fpath, 'IMAGE')
         else:
             thumb = p[fpath]
-        enum_items.append((img, img, "", thumb.icon_id, i))
+        enum_items.append((img[0], img[0], "", thumb.icon_id, i))
 
     return enum_items
 
@@ -495,10 +497,10 @@ def init_props():
     p = bpy.utils.previews.new()
     p.images_location = os.path.join(d, "preview")
     driver_namespace["shadertoy_tex_preview"] = p
-    scene.shadertoy_tex1 = EnumProperty(items=shadertoy_generate_tex_preview())
-    scene.shadertoy_tex2 = EnumProperty(items=shadertoy_generate_tex_preview())
-    scene.shadertoy_tex3 = EnumProperty(items=shadertoy_generate_tex_preview())
-    scene.shadertoy_tex4 = EnumProperty(items=shadertoy_generate_tex_preview())
+    scene.shadertoy_tex1 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png")
+    scene.shadertoy_tex2 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png")
+    scene.shadertoy_tex3 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png")
+    scene.shadertoy_tex4 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png")
 
     if not Path(bpy.utils.script_path_user() + "/startup/bl_app_templates_user/Shadertoy/startup.blend").exists():
         #self.report({"WARNING"}, 
