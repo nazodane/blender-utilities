@@ -254,6 +254,10 @@ def shadertoy_shaderid_update(self, context):
         return
     shadertoy_id = re.sub("^.*shadertoy\\.com\\/[a-zA-Z0-9]+\\/([a-zA-Z0-9]+)", "\\1", shadertoy_id)
 
+    if shadertoy_id != scene.shadertoy_id:
+        scene.shadertoy_id = shadertoy_id
+        return
+
     req = request.Request('https://www.shadertoy.com/shadertoy')
     req.add_header('Referer', 'https://www.shadertoy.com/view/' + shadertoy_id)
     req.add_header('User-Agent', 'Mozilla/5.0')
