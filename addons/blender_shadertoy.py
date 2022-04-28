@@ -478,26 +478,28 @@ def shadertoy_generate_tex_preview():
 
 from random import random
 
-
 def get_gtex(tex_name):
     d = shadertoy_addon_directory()
     data_d = os.path.join(d, "data")
 
     tex = ("2D", None)
 
+
     fpath = os.path.join(data_d, tex_name)
     if os.path.exists(fpath):
         if tex_name in [l[0] for l in shadertoy_cubemaps]:
-            p = []
+            img = bpy.data.images.load(fpath)
+            assert(img.size[0] == img.size[1])
+            sz = img.size[0] * img.size[0] * 4
+            buf = gpu.types.Buffer("FLOAT", sz * 6)
             for i in range(6):
                 fp = fpath
                 if i > 0:
                     fp = re.sub("(\\.[^\\.]*)$", "_" + str(i) + "\\1", fp)
                 img = bpy.data.images.load(fp)
-                p += img.pixels[:]
+                assert(img.size[0] * img.size[1] * 4 == sz)
+                buf[i*sz:(i+1)*sz] = img.pixels[:]
 
-            assert(img.size[0] == img.size[1])
-            buf = gpu.types.Buffer("FLOAT", img.size[0] * img.size[0] * 4 * 6, p)
             tex = ("Cube", gpu.types.GPUTexture(img.size[0], \
                            format="RGBA32F", is_cubemap = True, data=buf))
         else:
