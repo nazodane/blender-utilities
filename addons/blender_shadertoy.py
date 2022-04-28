@@ -246,7 +246,7 @@ class shadertoy_async_thread(threading.Thread):
 
 import re
 
-def shadertoy_shader_update(self, context):
+def shadertoy_shaderid_update(self, context):
     scene = self
     shadertoy_id = scene.shadertoy_id
     if shadertoy_id == "":
@@ -269,7 +269,7 @@ def shadertoy_shader_update(self, context):
     scene.shadertoy_tex4 = "none.png"
     intputs = (rpass[0]["inputs"] if "inputs" in rpass[0] else []) if len(rpass) else []
     for i in intputs:
-        if "type" in i and i["type"] == "texture" and "filepath" in i:
+        if "type" in i and i["type"] in ["texture", "cubemap"] and "filepath" in i:
             if "channel" in i and i["channel"] == 0:
                 scene.shadertoy_tex1 = os.path.basename(i["filepath"])
             if "channel" in i and i["channel"] == 1:
@@ -282,67 +282,15 @@ def shadertoy_shader_update(self, context):
     code = (rpass[0]["code"] if "code" in rpass[0] else "") if len(rpass) else ""
 
     if code == "":
-        print("ERROR: shadertoy_shader_update: shadertoy_id: %s"%shadertoy_id)
+        print("ERROR: shadertoy_shaderid_update: shadertoy_id: %s"%shadertoy_id)
         return
 
     txt = bpy.data.texts.new(shadertoy_id)
     txt.write(code)
     context.space_data.text = txt
+    driver_namespace["shadertoy_code"] = txt
 
-    # https://www.shadertoy.com/view/XsjGDt -> ok
-    # https://www.shadertoy.com/view/3sySRK -> ok
-    # https://www.shadertoy.com/view/MdX3zr -> ok
-    # https://www.shadertoy.com/view/Mss3zH (iMouse) -> ok
-    # https://www.shadertoy.com/view/lsKGWV (iTimeDelta/iFrameRate) -> ok
-    # https://www.shadertoy.com/view/WdtyRs (iDate) -> ok
-    # https://www.shadertoy.com/view/tdSSzV (2d texture) -> ok
-    # https://www.shadertoy.com/view/MsXGz8 (iChannelTime) -> ok
-    # https://www.shadertoy.com/view/4s2Xzc (iChannelResolution) -> ok
-
-    shader = gpu.types.GPUShader("""
-in vec2 pos;
-void main()
-{
-   gl_Position = vec4(pos, 0.0, 1.0);
-}
-""", """
-out vec4 FragColor; // todo: compatible name
-
-uniform vec3 iResolution;
-uniform float iTime;
-uniform float iTimeDelta;
-uniform int iFrame;
-uniform float iFrameRate;
-uniform float iChannelTime[4];
-uniform vec3 iChannelResolution[4];
-uniform vec4 iMouse;
-uniform sampler2D iChannel0;
-uniform sampler2D iChannel1;
-uniform sampler2D iChannel2;
-uniform sampler2D iChannel3;
-
-uniform vec4 iDate;
-//uniform float iSampleRate;
-""" + code + """
-void main(){
-    vec4 _fragColor;
-    mainImage(_fragColor, gl_FragCoord.xy);
-    FragColor = vec4(_fragColor.xyz, 1.0);
-}
-""")
-#    scene["code"] = code
-
-    vertices = ((-1.0, -1.0), (1.0, -1.0), (-1.0,  1.0), (1.0,  1.0))
-    indices = ((0, 1, 2), (2, 1, 3))
-
-#    vbo_format = shader.format_calc()
-#    vbo = GPUVertBuf(vbo_format, 4)
-#    vbo.attr_fill("pos", vertices)
-#    ibo = GPUIndexBuf(type="TRIS", seq=indices)
-#    batch = GPUBatch(type="TRIS", buf=vbo, elem=ibo)
-    batch = batch_for_shader(shader, 'TRIS', {"pos":vertices}, indices=indices)
-
-    driver_namespace["shadertoy_shader_param"] = (shader, batch)
+    shadertoy_shader_update(self, context)
 
     scene.render.engine = "SHADERTOY_ENGINE"
     scene.display_settings.display_device = 'None'
@@ -385,8 +333,6 @@ void main(){
     driver_namespace["shadertoy_clock"] = 0.0
     driver_namespace["shadertoy_framecount"] = 0
     driver_namespace["shadertoy_startclock"] = 0.0
-
-    shadertoy_tex_update(self, context)
 
     bpy.ops.screen.animation_play()
 
@@ -448,16 +394,16 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
         driver_namespace["shadertoy_clock"] = time.perf_counter()
         driver_namespace["shadertoy_framecount"] += 1
 
-        tex1 = driver_namespace["shadertoy_tex1"]
+        tex1 = driver_namespace["shadertoy_tex1"][1]
         if tex1:
             shader.uniform_sampler("iChannel0", tex1)
-        tex2 = driver_namespace["shadertoy_tex2"]
+        tex2 = driver_namespace["shadertoy_tex2"][1]
         if tex2:
             shader.uniform_sampler("iChannel1", tex2)
-        tex3 = driver_namespace["shadertoy_tex3"]
+        tex3 = driver_namespace["shadertoy_tex3"][1]
         if tex3:
             shader.uniform_sampler("iChannel2", tex3)
-        tex4 = driver_namespace["shadertoy_tex4"]
+        tex4 = driver_namespace["shadertoy_tex4"][1]
         if tex4:
             shader.uniform_sampler("iChannel3", tex4)
         try:
@@ -466,10 +412,10 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
 
         try:
             shader.uniform_float("iChannelResolution", [
-                (driver_namespace["shadertoy_tex1"].width, driver_namespace["shadertoy_tex1"].height, 1.0),
-                (driver_namespace["shadertoy_tex2"].width, driver_namespace["shadertoy_tex2"].height, 1.0),
-                (driver_namespace["shadertoy_tex3"].width, driver_namespace["shadertoy_tex3"].height, 1.0),
-                (driver_namespace["shadertoy_tex4"].width, driver_namespace["shadertoy_tex4"].height, 1.0),
+                (driver_namespace["shadertoy_tex1"][1].width, driver_namespace["shadertoy_tex1"][1].height, 1.0),
+                (driver_namespace["shadertoy_tex2"][1].width, driver_namespace["shadertoy_tex2"][1].height, 1.0),
+                (driver_namespace["shadertoy_tex3"][1].width, driver_namespace["shadertoy_tex3"][1].height, 1.0),
+                (driver_namespace["shadertoy_tex4"][1].width, driver_namespace["shadertoy_tex4"][1].height, 1.0),
             ])
         except: pass
 
@@ -530,35 +476,105 @@ def shadertoy_generate_tex_preview():
 
     return enum_items
 
-def shadertoy_tex_update(self, context):
-    scene = self
+from random import random
 
+
+def get_gtex(tex_name):
     d = shadertoy_addon_directory()
     data_d = os.path.join(d, "data")
 
-    fpath = os.path.join(data_d, str(scene.shadertoy_tex1))
-    if os.path.exists(fpath):
-        img = bpy.data.images.load(fpath)
-        tex = gpu.texture.from_image(img)
-        driver_namespace["shadertoy_tex1"] = tex
+    tex = ("2D", None)
 
-    fpath = os.path.join(data_d, str(scene.shadertoy_tex2))
+    fpath = os.path.join(data_d, tex_name)
     if os.path.exists(fpath):
-        img = bpy.data.images.load(fpath)
-        tex = gpu.texture.from_image(img)
-        driver_namespace["shadertoy_tex2"] = tex
+        if tex_name in [l[0] for l in shadertoy_cubemaps]:
+            p = []
+            for i in range(6):
+                fp = fpath
+                if i > 0:
+                    fp = re.sub("(\\.[^\\.]*)$", "_" + str(i) + "\\1", fp)
+                img = bpy.data.images.load(fp)
+                p += img.pixels[:]
 
-    fpath = os.path.join(data_d, str(scene.shadertoy_tex3))
-    if os.path.exists(fpath):
-        img = bpy.data.images.load(fpath)
-        tex = gpu.texture.from_image(img)
-        driver_namespace["shadertoy_tex3"] = tex
+            assert(img.size[0] == img.size[1])
+            buf = gpu.types.Buffer("FLOAT", img.size[0] * img.size[0] * 4 * 6, p)
+            tex = ("Cube", gpu.types.GPUTexture(img.size[0], \
+                           format="RGBA32F", is_cubemap = True, data=buf))
+        else:
+            img = bpy.data.images.load(fpath)
+            tex = ("2D", gpu.texture.from_image(img)) # should be fast (using cache)
+    return tex
 
-    fpath = os.path.join(data_d, str(scene.shadertoy_tex4))
-    if os.path.exists(fpath):
-        img = bpy.data.images.load(fpath)
-        tex = gpu.texture.from_image(img)
-        driver_namespace["shadertoy_tex4"] = tex
+
+def shadertoy_shader_update(self, context):
+    scene = self
+    driver_namespace["shadertoy_tex1"] = get_gtex(str(scene.shadertoy_tex1))
+    driver_namespace["shadertoy_tex2"] = get_gtex(str(scene.shadertoy_tex2))
+    driver_namespace["shadertoy_tex3"] = get_gtex(str(scene.shadertoy_tex3))
+    driver_namespace["shadertoy_tex4"] = get_gtex(str(scene.shadertoy_tex4))
+
+    if not driver_namespace["shadertoy_code"]:
+        return
+    code = driver_namespace["shadertoy_code"].as_string()
+
+    # https://www.shadertoy.com/view/XsjGDt -> ok
+    # https://www.shadertoy.com/view/3sySRK -> ok
+    # https://www.shadertoy.com/view/MdX3zr -> ok
+    # https://www.shadertoy.com/view/Mss3zH (iMouse) -> ok
+    # https://www.shadertoy.com/view/lsKGWV (iTimeDelta/iFrameRate) -> ok
+    # https://www.shadertoy.com/view/WdtyRs (iDate) -> ok
+    # https://www.shadertoy.com/view/tdSSzV (2d texture) -> ok
+    # https://www.shadertoy.com/view/MsXGz8 (iChannelTime) -> ok
+    # https://www.shadertoy.com/view/4s2Xzc (iChannelResolution) -> ok
+    # https://www.shadertoy.com/view/XsBSDR (cubemap) -> wrong
+
+    shader = gpu.types.GPUShader("""
+in vec2 pos;
+void main()
+{
+   gl_Position = vec4(pos, 0.0, 1.0);
+}
+""", """
+out vec4 FragColor; // todo: compatible name
+
+uniform vec3 iResolution;
+uniform float iTime;
+uniform float iTimeDelta;
+uniform int iFrame;
+uniform float iFrameRate;
+uniform float iChannelTime[4];
+uniform vec3 iChannelResolution[4];
+uniform vec4 iMouse;
+uniform sampler""" + driver_namespace["shadertoy_tex1"][0] + """ iChannel0;
+uniform sampler""" + driver_namespace["shadertoy_tex2"][0] + """ iChannel1;
+uniform sampler""" + driver_namespace["shadertoy_tex3"][0] + """ iChannel2;
+uniform sampler""" + driver_namespace["shadertoy_tex4"][0] + """ iChannel3;
+
+uniform vec4 iDate;
+//uniform float iSampleRate;
+""" + code + """
+void main(){
+    vec4 _fragColor;
+    mainImage(_fragColor, gl_FragCoord.xy);
+    FragColor = vec4(_fragColor.xyz, 1.0);
+}
+""")
+#    scene["code"] = code
+
+    vertices = ((-1.0, -1.0), (1.0, -1.0), (-1.0,  1.0), (1.0,  1.0))
+    indices = ((0, 1, 2), (2, 1, 3))
+
+#    vbo_format = shader.format_calc()
+#    vbo = GPUVertBuf(vbo_format, 4)
+#    vbo.attr_fill("pos", vertices)
+#    ibo = GPUIndexBuf(type="TRIS", seq=indices)
+#    batch = GPUBatch(type="TRIS", buf=vbo, elem=ibo)
+    batch = batch_for_shader(shader, 'TRIS', {"pos":vertices}, indices=indices)
+
+    driver_namespace["shadertoy_shader_param"] = (shader, batch)
+
+
+
 
 from pathlib import Path
 
@@ -570,7 +586,7 @@ def init_props():
     scene = bpy.types.Scene
     scene.shadertoy_id = StringProperty(name="Shadertoy ID", 
                                           default="",
-                                          update=shadertoy_shader_update)
+                                          update=shadertoy_shaderid_update)
     driver_namespace["shadertoy_inputmenu_handle"] = shadertoy_inputmenu
     bpy.types.TEXT_HT_header.append(shadertoy_inputmenu)
 
@@ -579,13 +595,13 @@ def init_props():
     p.images_location = os.path.join(d, "preview")
     driver_namespace["shadertoy_tex_preview"] = p
     scene.shadertoy_tex1 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
-                                        update=shadertoy_tex_update)
+                                        update=shadertoy_shader_update)
     scene.shadertoy_tex2 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
-                                        update=shadertoy_tex_update)
+                                        update=shadertoy_shader_update)
     scene.shadertoy_tex3 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
-                                        update=shadertoy_tex_update)
+                                        update=shadertoy_shader_update)
     scene.shadertoy_tex4 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
-                                        update=shadertoy_tex_update)
+                                        update=shadertoy_shader_update)
 
     if not Path(bpy.utils.script_path_user() + "/startup/bl_app_templates_user/Shadertoy/startup.blend").exists():
         #self.report({"WARNING"}, 
@@ -597,10 +613,12 @@ def init_props():
     driver_namespace["shadertoy_framecount"] = 0
     driver_namespace["shadertoy_startclock"] = 0.0
 
-    driver_namespace["shadertoy_tex1"] = None
-    driver_namespace["shadertoy_tex2"] = None
-    driver_namespace["shadertoy_tex3"] = None
-    driver_namespace["shadertoy_tex4"] = None
+    driver_namespace["shadertoy_tex1"] = ("2D", None)
+    driver_namespace["shadertoy_tex2"] = ("2D", None)
+    driver_namespace["shadertoy_tex3"] = ("2D", None)
+    driver_namespace["shadertoy_tex4"] = ("2D", None)
+
+    driver_namespace["shadertoy_code"] = None
 
 def clear_props():
     scene = bpy.types.Scene
@@ -641,6 +659,9 @@ def clear_props():
         del driver_namespace["shadertoy_tex3"]
     if "shadertoy_tex4" in driver_namespace:
         del driver_namespace["shadertoy_tex4"]
+
+    if "shadertoy_code" in driver_namespace:
+        del driver_namespace["shadertoy_code"]
 
 class ShadertoyTool(bpy.types.WorkSpaceTool):  
     bl_space_type = 'VIEW_3D'
