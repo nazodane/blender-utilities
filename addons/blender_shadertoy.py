@@ -245,6 +245,54 @@ class shadertoy_async_thread(threading.Thread):
     def run(self):
         shadertoy_media_download()
 
+def shadertoy_shader_run(self, context):
+    scene = self
+    shadertoy_shader_update(self, context)
+
+    scene.render.engine = "SHADERTOY_ENGINE"
+    scene.display_settings.display_device = 'None'
+    scene.frame_end = 1048574
+    scene.render.fps = 240
+    scene.sync_mode = "FRAME_DROP"
+
+    sc = context.screen
+    for (area, space) in [(area, area.spaces[0]) for area in sc.areas if area.type == "VIEW_3D"]:
+        space.shading.type = "RENDERED"
+        space.overlay.show_overlays = False
+        space.show_gizmo = False
+        space.show_object_viewport_mesh = False
+        space.show_object_viewport_curve = False
+        space.show_object_viewport_surf = False
+        space.show_object_viewport_meta = False
+        space.show_object_viewport_font = False
+        space.show_object_viewport_pointcloud = False
+        space.show_object_viewport_volume = False
+        space.show_object_viewport_grease_pencil = False
+        space.show_object_viewport_armature = False
+        space.show_object_viewport_lattice = False
+        space.show_object_viewport_empty = False
+        space.show_object_viewport_light = False
+        space.show_object_viewport_light_probe = False
+        space.show_object_viewport_camera = False
+        space.show_object_viewport_speaker = False
+        space.show_region_tool_header = False
+        space.show_region_header = False
+        space.show_region_ui = False
+
+        override_context = context.copy()
+        override_context['area'] = area
+        override_context['region'] = area.regions[-1]
+        override_context['space_data'] = space
+        bpy.ops.wm.tool_set_by_id(override_context, name='shadertoy.shadertoy_tool')
+
+        space.show_region_toolbar = False
+
+    driver_namespace["shadertoy_clock"] = 0.0
+    driver_namespace["shadertoy_framecount"] = 0
+    driver_namespace["shadertoy_startclock"] = 0.0
+
+    bpy.ops.screen.animation_play()
+
 import re
 
 def shadertoy_shaderid_update(self, context):
@@ -295,52 +343,30 @@ def shadertoy_shaderid_update(self, context):
     txt.write(code)
     context.space_data.text = txt
     driver_namespace["shadertoy_code"] = txt
+    shadertoy_shader_run(self, context)
 
-    shadertoy_shader_update(self, context)
+class ShadertoyRunScriptOperator(bpy.types.Operator):
+    bl_idname = "text.run_script" # override
+    bl_label = bpy.ops.text.run_script.get_rna_type().description
+    #bl_options = {'UNDO','REGISTER'}
 
-    scene.render.engine = "SHADERTOY_ENGINE"
-    scene.display_settings.display_device = 'None'
-    scene.frame_end = 1048574
-    scene.render.fps = 240
-    scene.sync_mode = "FRAME_DROP"
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        txt = context.space_data.text
+        if not re.search("\\.stoy($|\\.)", txt.name):
+            print(txt.name)
+            bpy.utils.unregister_class(ShadertoyRunScriptOperator)
+            ret = bpy.ops.text.run_script() # TODO: context passing?
+            bpy.utils.register_class(ShadertoyRunScriptOperator)
+            return ret
 
-    sc = context.screen
-    for (area, space) in [(area, area.spaces[0]) for area in sc.areas if area.type == "VIEW_3D"]:
-        space.shading.type = "RENDERED"
-        space.overlay.show_overlays = False
-        space.show_gizmo = False
-        space.show_object_viewport_mesh = False
-        space.show_object_viewport_curve = False
-        space.show_object_viewport_surf = False
-        space.show_object_viewport_meta = False
-        space.show_object_viewport_font = False
-        space.show_object_viewport_pointcloud = False
-        space.show_object_viewport_volume = False
-        space.show_object_viewport_grease_pencil = False
-        space.show_object_viewport_armature = False
-        space.show_object_viewport_lattice = False
-        space.show_object_viewport_empty = False
-        space.show_object_viewport_light = False
-        space.show_object_viewport_light_probe = False
-        space.show_object_viewport_camera = False
-        space.show_object_viewport_speaker = False
-        space.show_region_tool_header = False
-        space.show_region_header = False
-        space.show_region_ui = False
+        driver_namespace["shadertoy_code"] = txt
+        shadertoy_shader_run(context.scene, context)
 
-        override_context = context.copy()
-        override_context['area'] = area
-        override_context['region'] = area.regions[-1]
-        override_context['space_data'] = space
-        bpy.ops.wm.tool_set_by_id(override_context, name='shadertoy.shadertoy_tool')
-
-        space.show_region_toolbar = False
-
-    driver_namespace["shadertoy_clock"] = 0.0
-    driver_namespace["shadertoy_framecount"] = 0
-    driver_namespace["shadertoy_startclock"] = 0.0
-
-    bpy.ops.screen.animation_play()
+        return {'FINISHED'}
 
 import datetime
 
@@ -689,6 +715,7 @@ class ShadertoyTool(bpy.types.WorkSpaceTool):
 classes = [
     ShadertoyRenderEngine,
     ShadertoyModalOperator,
+    ShadertoyRunScriptOperator,
     SHADERTOY_PT_TexPanel,
 ]
 
