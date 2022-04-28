@@ -264,7 +264,7 @@ def shadertoy_shaderid_update(self, context):
     rpass =(db[0]["renderpass"] if "renderpass" in db[0] else []) if len(db) else []
     print(rpass)
 
-    txt = bpy.data.texts.new(shadertoy_id)
+    txt = bpy.data.texts.new(shadertoy_id + ".stoy")
 
     txt.shadertoy_tex1 = \
     txt.shadertoy_tex2 = \
