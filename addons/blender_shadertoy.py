@@ -86,10 +86,11 @@ class SHADERTOY_PT_TexPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        layout.template_icon_view(scene, "shadertoy_tex1")
-        layout.template_icon_view(scene, "shadertoy_tex2")
-        layout.template_icon_view(scene, "shadertoy_tex3")
-        layout.template_icon_view(scene, "shadertoy_tex4")
+        text = context.space_data.text
+        layout.template_icon_view(text, "shadertoy_tex1")
+        layout.template_icon_view(text, "shadertoy_tex2")
+        layout.template_icon_view(text, "shadertoy_tex3")
+        layout.template_icon_view(text, "shadertoy_tex4")
 
 # media filename, preview checksum and data checksum
 shadertoy_medias = [
@@ -263,21 +264,23 @@ def shadertoy_shaderid_update(self, context):
     rpass =(db[0]["renderpass"] if "renderpass" in db[0] else []) if len(db) else []
     print(rpass)
 
-    scene.shadertoy_tex1 = \
-    scene.shadertoy_tex2 = \
-    scene.shadertoy_tex3 = \
-    scene.shadertoy_tex4 = "none.png"
+    txt = bpy.data.texts.new(shadertoy_id)
+
+    txt.shadertoy_tex1 = \
+    txt.shadertoy_tex2 = \
+    txt.shadertoy_tex3 = \
+    txt.shadertoy_tex4 = "none.png"
     intputs = (rpass[0]["inputs"] if "inputs" in rpass[0] else []) if len(rpass) else []
     for i in intputs:
         if "type" in i and i["type"] in ["texture", "cubemap"] and "filepath" in i:
             if "channel" in i and i["channel"] == 0:
-                scene.shadertoy_tex1 = os.path.basename(i["filepath"])
+                txt.shadertoy_tex1 = os.path.basename(i["filepath"])
             if "channel" in i and i["channel"] == 1:
-                scene.shadertoy_tex2 = os.path.basename(i["filepath"])
+                txt.shadertoy_tex2 = os.path.basename(i["filepath"])
             if "channel" in i and i["channel"] == 2:
-                scene.shadertoy_tex3 = os.path.basename(i["filepath"])
+                txt.shadertoy_tex3 = os.path.basename(i["filepath"])
             if "channel" in i and i["channel"] == 3:
-                scene.shadertoy_tex4 = os.path.basename(i["filepath"])
+                txt.shadertoy_tex4 = os.path.basename(i["filepath"])
 
     code = (rpass[0]["code"] if "code" in rpass[0] else "") if len(rpass) else ""
 
@@ -285,7 +288,6 @@ def shadertoy_shaderid_update(self, context):
         print("ERROR: shadertoy_shaderid_update: shadertoy_id: %s"%shadertoy_id)
         return
 
-    txt = bpy.data.texts.new(shadertoy_id)
     txt.write(code)
     context.space_data.text = txt
     driver_namespace["shadertoy_code"] = txt
@@ -510,14 +512,15 @@ def get_gtex(tex_name):
 
 def shadertoy_shader_update(self, context):
     scene = self
-    driver_namespace["shadertoy_tex1"] = get_gtex(str(scene.shadertoy_tex1))
-    driver_namespace["shadertoy_tex2"] = get_gtex(str(scene.shadertoy_tex2))
-    driver_namespace["shadertoy_tex3"] = get_gtex(str(scene.shadertoy_tex3))
-    driver_namespace["shadertoy_tex4"] = get_gtex(str(scene.shadertoy_tex4))
-
     if not driver_namespace["shadertoy_code"]:
         return
-    code = driver_namespace["shadertoy_code"].as_string()
+    txt = driver_namespace["shadertoy_code"]
+    driver_namespace["shadertoy_tex1"] = get_gtex(str(txt.shadertoy_tex1))
+    driver_namespace["shadertoy_tex2"] = get_gtex(str(txt.shadertoy_tex2))
+    driver_namespace["shadertoy_tex3"] = get_gtex(str(txt.shadertoy_tex3))
+    driver_namespace["shadertoy_tex4"] = get_gtex(str(txt.shadertoy_tex4))
+
+    code = txt.as_string()
 
     # https://www.shadertoy.com/view/XsjGDt -> ok
     # https://www.shadertoy.com/view/3sySRK -> ok
@@ -586,6 +589,7 @@ def init_props():
 
     clear_props()
     scene = bpy.types.Scene
+    text = bpy.types.Text
     scene.shadertoy_id = StringProperty(name="Shadertoy ID", 
                                           default="",
                                           update=shadertoy_shaderid_update)
@@ -596,13 +600,13 @@ def init_props():
     p = bpy.utils.previews.new()
     p.images_location = os.path.join(d, "preview")
     driver_namespace["shadertoy_tex_preview"] = p
-    scene.shadertoy_tex1 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
+    text.shadertoy_tex1 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
                                         update=shadertoy_shader_update)
-    scene.shadertoy_tex2 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
+    text.shadertoy_tex2 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
                                         update=shadertoy_shader_update)
-    scene.shadertoy_tex3 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
+    text.shadertoy_tex3 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
                                         update=shadertoy_shader_update)
-    scene.shadertoy_tex4 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
+    text.shadertoy_tex4 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
                                         update=shadertoy_shader_update)
 
     if not Path(bpy.utils.script_path_user() + "/startup/bl_app_templates_user/Shadertoy/startup.blend").exists():
@@ -624,6 +628,7 @@ def init_props():
 
 def clear_props():
     scene = bpy.types.Scene
+    text = bpy.types.Text
     if "shadertoy_inputmenu_handle" in driver_namespace:
         bpy.types.TEXT_HT_header.remove(driver_namespace["shadertoy_inputmenu_handle"])
         del driver_namespace["shadertoy_inputmenu_handle"]
@@ -633,14 +638,14 @@ def clear_props():
 
     if "shadertoy_tex_preview" in driver_namespace:
         del driver_namespace["shadertoy_tex_preview"]
-    if hasattr(scene, "shadertoy_tex1"):
-        del scene.shadertoy_tex1
-    if hasattr(scene, "shadertoy_tex2"):
-        del scene.shadertoy_tex2
-    if hasattr(scene, "shadertoy_tex3"):
-        del scene.shadertoy_tex3
-    if hasattr(scene, "shadertoy_tex4"):
-        del scene.shadertoy_tex4
+    if hasattr(text, "shadertoy_tex1"):
+        del text.shadertoy_tex1
+    if hasattr(text, "shadertoy_tex2"):
+        del text.shadertoy_tex2
+    if hasattr(text, "shadertoy_tex3"):
+        del text.shadertoy_tex3
+    if hasattr(text, "shadertoy_tex4"):
+        del text.shadertoy_tex4
 
     if "shadertoy_shader_param" in driver_namespace:
         del driver_namespace["shadertoy_shader_param"]
