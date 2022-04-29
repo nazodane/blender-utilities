@@ -729,20 +729,24 @@ def shadertoy_shader_update(self, context):
 
     sc = context.screen
     region = [r for r in [area.regions for area in sc.areas if area.type == "VIEW_3D"][0] if r.type=="WINDOW"][0]
-    if driver_namespace["shadertoy_buffer_a_offscreen"]:
-         driver_namespace["shadertoy_buffer_a_offscreen"].free()
+
+    def offscreen_free(key):
+        if driver_namespace["shadertoy_buffer_a_offscreen"]:
+            t = driver_namespace["shadertoy_buffer_a_offscreen"]
+            driver_namespace["shadertoy_buffer_a_offscreen"] = None
+            t.free()
+
+    offscreen_free("shadertoy_buffer_a_offscreen")
+    offscreen_free("shadertoy_buffer_b_offscreen")
+    offscreen_free("shadertoy_buffer_c_offscreen")
+    offscreen_free("shadertoy_buffer_d_offscreen")
+
     if txt.shadertoy_buffer_a:
         driver_namespace["shadertoy_buffer_a_offscreen"] = gpu.types.GPUOffScreen(region.width, region.height)
-    if driver_namespace["shadertoy_buffer_b_offscreen"]:
-         driver_namespace["shadertoy_buffer_b_offscreen"].free()
     if txt.shadertoy_buffer_b:
         driver_namespace["shadertoy_buffer_b_offscreen"] = gpu.types.GPUOffScreen(region.width, region.height)
-    if driver_namespace["shadertoy_buffer_c_offscreen"]:
-         driver_namespace["shadertoy_buffer_c_offscreen"].free()
     if txt.shadertoy_buffer_c:
         driver_namespace["shadertoy_buffer_c_offscreen"] = gpu.types.GPUOffScreen(region.width, region.height)
-    if driver_namespace["shadertoy_buffer_d_offscreen"]:
-         driver_namespace["shadertoy_buffer_d_offscreen"].free()
     if txt.shadertoy_buffer_d:
         driver_namespace["shadertoy_buffer_d_offscreen"] = gpu.types.GPUOffScreen(region.width, region.height)
 
