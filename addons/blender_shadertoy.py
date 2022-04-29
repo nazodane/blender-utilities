@@ -423,6 +423,7 @@ class ShadertoyRunScriptOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 import datetime
+from mathutils import Matrix
 
 class ShadertoyRenderEngine(bpy.types.RenderEngine):
     bl_idname = 'SHADERTOY_ENGINE'
@@ -458,27 +459,37 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
         frame = int(modf(scene.frame_float)[1])
         mouse = driver_namespace["shadertoy_mouse"]
 
-#        shadertoy_buffer_a_offscreen = None # TODO: reuse previous frame and resize to region
-#        shadertoy_buffer_b_offscreen = None
-#        shadertoy_buffer_c_offscreen = None
-#        shadertoy_buffer_d_offscreen = None
+        shadertoy_buffer_a_offscreen = None # TODO: resize to region
+        shadertoy_buffer_b_offscreen = None
+        shadertoy_buffer_c_offscreen = None
+        shadertoy_buffer_d_offscreen = None
 
-        for sh in ["shadertoy_image_shader"]:
-#        for sh in ["shadertoy_buffer_a_shader", "shadertoy_buffer_b_shader", \
-#                   "shadertoy_buffer_c_shader", "shadertoy_buffer_d_shader", "shadertoy_image_shader"]: # TODO: not working...
+#        for sh in ["shadertoy_image_shader"]:
+        for sh in ["shadertoy_buffer_a_shader", "shadertoy_buffer_b_shader", \
+                   "shadertoy_buffer_c_shader", "shadertoy_buffer_d_shader", "shadertoy_image_shader"]: # TODO: not working...
 
-#            if sh == "shadertoy_buffer_a_shader":
-#                shadertoy_buffer_a_offscreen = gpu.types.GPUOffScreen(region.width, region.height)
-#                shadertoy_buffer_a_offscreen.bind()
-#            elif sh == "shadertoy_buffer_b_shader":
-#                shadertoy_buffer_b_offscreen = gpu.types.GPUOffScreen(region.width, region.height)
-#                shadertoy_buffer_b_offscreen.bind()
-#            elif sh == "shadertoy_buffer_c_shader":
-#                shadertoy_buffer_c_offscreen = gpu.types.GPUOffScreen(region.width, region.height)
-#                shadertoy_buffer_c_offscreen.bind()
-#            elif sh == "shadertoy_buffer_d_shader":
-#                shadertoy_buffer_d_offscreen = gpu.types.GPUOffScreen(region.width, region.height)
-#                shadertoy_buffer_d_offscreen.bind()
+            if sh == "shadertoy_buffer_a_shader":
+                shadertoy_buffer_a_offscreen = driver_namespace["shadertoy_buffer_a_offscreen"]
+                if not shadertoy_buffer_a_offscreen:
+                    continue
+                shadertoy_buffer_a_offscreen.bind()
+            elif sh == "shadertoy_buffer_b_shader":
+                shadertoy_buffer_b_offscreen = driver_namespace["shadertoy_buffer_b_offscreen"]
+                if not shadertoy_buffer_b_offscreen:
+                    continue
+                shadertoy_buffer_b_offscreen.bind()
+            elif sh == "shadertoy_buffer_c_shader":
+                shadertoy_buffer_c_offscreen = driver_namespace["shadertoy_buffer_c_offscreen"]
+                if not shadertoy_buffer_c_offscreen:
+                    continue
+                shadertoy_buffer_c_offscreen.bind()
+            elif sh == "shadertoy_buffer_d_shader":
+                shadertoy_buffer_d_offscreen = driver_namespace["shadertoy_buffer_d_offscreen"]
+                if not shadertoy_buffer_d_offscreen:
+                    continue
+                shadertoy_buffer_d_offscreen.bind()
+#            gpu.matrix.load_matrix(Matrix.Identity(4))
+#            gpu.matrix.load_projection_matrix(Matrix.Identity(4))
 
             param = driver_namespace[sh]
             if not param:
@@ -513,23 +524,11 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
             except: pass
 
             def texset(ch, tex):
-                sz = None
-#                if tex == "buffer00.png" and shadertoy_buffer_a_offscreen:
-#                    tex = shadertoy_buffer_a_offscreen.texture_color
-#                    sz = (region.width, region.height, 1.0)
-#                elif tex == "buffer01.png" and shadertoy_buffer_b_offscreen:
-#                    tex = shadertoy_buffer_b_offscreen.texture_color
-#                    sz = (region.width, region.height, 1.0)
-#                elif tex == "buffer02.png" and shadertoy_buffer_c_offscreen:
-#                    tex = shadertoy_buffer_c_offscreen.texture_color
-#                    sz = (region.width, region.height, 1.0)
-#                elif tex == "buffer03.png" and shadertoy_buffer_d_offscreen:
-#                    tex = shadertoy_buffer_d_offscreen.texture_color
-#                    sz = (region.width, region.height, 1.0)
-#                elif tex:
+                sz = (0, 0, 1.0)
+                if type(tex) == gpu.types.GPUOffScreen:
+                    tex = tex.texture_color
                 if tex:
                     sz = (tex.width, tex.height, 1.0)
-                if tex:
                     shader.uniform_sampler(ch, tex)
                 return sz
 
@@ -550,14 +549,15 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
             batch.draw(shader)
             gpu.state.blend_set('NONE')
 
-#        if shadertoy_buffer_a_offscreen:
-#            shadertoy_buffer_a_offscreen.free()
-#        if shadertoy_buffer_b_offscreen:
-#            shadertoy_buffer_b_offscreen.free()
-#        if shadertoy_buffer_c_offscreen:
-#            shadertoy_buffer_c_offscreen.free()
-#        if shadertoy_buffer_d_offscreen:
-#            shadertoy_buffer_d_offscreen.free()
+            if sh == "shadertoy_buffer_a_shader":
+                shadertoy_buffer_a_offscreen.unbind()
+            elif sh == "shadertoy_buffer_b_shader":
+                shadertoy_buffer_b_offscreen.unbind()
+            elif sh == "shadertoy_buffer_c_shader":
+                shadertoy_buffer_c_offscreen.unbind()
+            elif sh == "shadertoy_buffer_d_shader":
+                shadertoy_buffer_d_offscreen.unbind()
+
 
 class ShadertoyModalOperator(bpy.types.Operator):
     bl_idname = "shadertoy.modal_operator"
@@ -636,11 +636,22 @@ def get_gtex(tex_name):
 
             tex = ("Cube", gpu.types.GPUTexture(img.size[0], \
                            format="RGBA32F", is_cubemap = True, data=buf))
-        elif tex_name in [l[0] for l in shadertoy_previs]:
-            tex = ("2D", tex_name)
         else:
             img = bpy.data.images.load(fpath)
             tex = ("2D", gpu.texture.from_image(img)) # should be fast (using cache)
+    elif tex_name in [l[0] for l in shadertoy_previs]:
+        offscreen = None
+        if tex_name == "buffer00.png":
+            offscreen = driver_namespace["shadertoy_buffer_a_offscreen"]
+        elif tex_name == "buffer01.png":
+            offscreen = driver_namespace["shadertoy_buffer_b_offscreen"]
+        elif tex_name == "buffer02.png":
+            offscreen = driver_namespace["shadertoy_buffer_c_offscreen"]
+        elif tex_name == "buffer03.png":
+            offscreen = driver_namespace["shadertoy_buffer_d_offscreen"]
+
+        tex = ("2D", offscreen)
+
     return tex
 
 def text2gtex(txt):
@@ -650,6 +661,7 @@ def text2gtex(txt):
 def text2shader(txt):
     if not txt:
         return None
+
     gtex = text2gtex(txt)
     code = txt.as_string()
 
@@ -715,6 +727,25 @@ def shadertoy_shader_update(self, context):
     if not txt:
         return
 
+    sc = context.screen
+    region = [r for r in [area.regions for area in sc.areas if area.type == "VIEW_3D"][0] if r.type=="WINDOW"][0]
+    if driver_namespace["shadertoy_buffer_a_offscreen"]:
+         driver_namespace["shadertoy_buffer_a_offscreen"].free()
+    if txt.shadertoy_buffer_a:
+        driver_namespace["shadertoy_buffer_a_offscreen"] = gpu.types.GPUOffScreen(region.width, region.height)
+    if driver_namespace["shadertoy_buffer_b_offscreen"]:
+         driver_namespace["shadertoy_buffer_b_offscreen"].free()
+    if txt.shadertoy_buffer_b:
+        driver_namespace["shadertoy_buffer_b_offscreen"] = gpu.types.GPUOffScreen(region.width, region.height)
+    if driver_namespace["shadertoy_buffer_c_offscreen"]:
+         driver_namespace["shadertoy_buffer_c_offscreen"].free()
+    if txt.shadertoy_buffer_c:
+        driver_namespace["shadertoy_buffer_c_offscreen"] = gpu.types.GPUOffScreen(region.width, region.height)
+    if driver_namespace["shadertoy_buffer_d_offscreen"]:
+         driver_namespace["shadertoy_buffer_d_offscreen"].free()
+    if txt.shadertoy_buffer_d:
+        driver_namespace["shadertoy_buffer_d_offscreen"] = gpu.types.GPUOffScreen(region.width, region.height)
+
     driver_namespace["shadertoy_image_shader"] = text2shader(txt)
     driver_namespace["shadertoy_buffer_a_shader"] = text2shader(txt.shadertoy_buffer_a)
     driver_namespace["shadertoy_buffer_b_shader"] = text2shader(txt.shadertoy_buffer_b)
@@ -745,7 +776,6 @@ def init_props():
     th = shadertoy_async_thread()
     th.start()
 
-    clear_props()
     scene = bpy.types.Scene
     text = bpy.types.Text
     scene.shadertoy_id = StringProperty(name="Shadertoy ID", 
@@ -795,6 +825,11 @@ def init_props():
     driver_namespace["shadertoy_buffer_d_shader"] = \
     driver_namespace["shadertoy_cubemap_a_shader"] = None
 
+    driver_namespace["shadertoy_buffer_a_offscreen"] = \
+    driver_namespace["shadertoy_buffer_b_offscreen"] = \
+    driver_namespace["shadertoy_buffer_c_offscreen"] = \
+    driver_namespace["shadertoy_buffer_d_offscreen"] = None
+
     scene.shadertoy_code = PointerProperty(type=bpy.types.Text, name="Shadertoy Code")
 
 def clear_props():
@@ -840,6 +875,15 @@ def clear_props():
     if "shadertoy_cubemap_a_shader" in driver_namespace:
         del driver_namespace["shadertoy_cubemap_a_shader"]
 
+    if "shadertoy_buffer_a_offscreen" in driver_namespace:
+        del driver_namespace["shadertoy_buffer_a_offscreen"]
+    if "shadertoy_buffer_b_offscreen" in driver_namespace:
+        del driver_namespace["shadertoy_buffer_b_offscreen"]
+    if "shadertoy_buffer_c_offscreen" in driver_namespace:
+        del driver_namespace["shadertoy_buffer_c_offscreen"]
+    if "shadertoy_buffer_d_offscreen" in driver_namespace:
+        del driver_namespace["shadertoy_buffer_d_offscreen"]
+
     if hasattr(scene, "shadertoy_code"):
         del scene.shadertoy_code
 
@@ -863,6 +907,7 @@ classes = [
 ]
 
 def register():
+    unregister()
     for c in classes:
         bpy.utils.register_class(c)
     init_props()
@@ -870,9 +915,13 @@ def register():
 
 def unregister():
     clear_props()
+    try:
+        bpy.utils.unregister_tool(ShadertoyTool)
+    except: pass
     for c in classes:
-        bpy.utils.unregister_class(c)
-    bpy.utils.unregister_tool(ShadertoyTool)
+        try:
+            bpy.utils.unregister_class(c)
+        except: pass
 
 if __name__ == "__main__":
     register()
