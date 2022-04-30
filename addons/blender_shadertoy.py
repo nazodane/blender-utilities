@@ -761,6 +761,9 @@ def shadertoy_shader_update(self, context):
             driver_namespace[key] = None
             t.free()
 
+    if "shadertoy_buffer_a_offscreen" not in driver_namespace:
+        register()
+
     offscreen_free("shadertoy_buffer_a_offscreen")
     offscreen_free("shadertoy_buffer_b_offscreen")
     offscreen_free("shadertoy_buffer_c_offscreen")
