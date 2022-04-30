@@ -319,6 +319,8 @@ def shadertoy_shader_run(self, context):
     driver_namespace["shadertoy_framecount"] = 0
     driver_namespace["shadertoy_startclock"] = 0.0
 
+    scene.frame_current = 0
+    bpy.ops.screen.animation_cancel()
     bpy.ops.screen.animation_play()
 
 import re
