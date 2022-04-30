@@ -423,7 +423,7 @@ class ShadertoyRunScriptOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 import datetime
-from mathutils import Matrix
+import numpy as np
 
 class ShadertoyRenderEngine(bpy.types.RenderEngine):
     bl_idname = 'SHADERTOY_ENGINE'
@@ -498,15 +498,14 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                     tex = tex.texture_color
                 elif type(tex) == tuple and type(tex[0]) == gpu.types.GPUOffScreen: # cubemap
                     tex = gpu.types.GPUTexture(1024, format="RGBA32F", is_cubemap = True, \
-                        data=gpu.types.Buffer("FLOAT", (6,1024,1024,4), (
+                        data=gpu.types.Buffer("FLOAT", 6 * 1024 * 1024 * 4, np.asarray((
                             tex[0].texture_color.read(),
                             tex[1].texture_color.read(),
                             tex[2].texture_color.read(),
                             tex[3].texture_color.read(),
                             tex[4].texture_color.read(),
                             tex[5].texture_color.read()
-                        )))
-                    tex = None
+                        )).ravel()))
                 if tex:
                     sz = (tex.width, tex.height, 1.0)
                     shader.uniform_sampler(ch, tex)
