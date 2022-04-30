@@ -459,48 +459,17 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
         frame = int(modf(scene.frame_float)[1])
         mouse = driver_namespace["shadertoy_mouse"]
 
-        shadertoy_buffer_a_offscreen = None # TODO: resize to region
-        shadertoy_buffer_b_offscreen = None
-        shadertoy_buffer_c_offscreen = None
-        shadertoy_buffer_d_offscreen = None
-
-#        for sh in ["shadertoy_image_shader"]:
-        for sh in ["shadertoy_buffer_a_shader", "shadertoy_buffer_b_shader", \
-                   "shadertoy_buffer_c_shader", "shadertoy_buffer_d_shader", "shadertoy_image_shader"]: # TODO: not working...
-
-            if sh == "shadertoy_buffer_a_shader":
-                shadertoy_buffer_a_offscreen = driver_namespace["shadertoy_buffer_a_offscreen"]
-                if not shadertoy_buffer_a_offscreen:
-                    continue
-                shadertoy_buffer_a_offscreen.bind()
-            elif sh == "shadertoy_buffer_b_shader":
-                shadertoy_buffer_b_offscreen = driver_namespace["shadertoy_buffer_b_offscreen"]
-                if not shadertoy_buffer_b_offscreen:
-                    continue
-                shadertoy_buffer_b_offscreen.bind()
-            elif sh == "shadertoy_buffer_c_shader":
-                shadertoy_buffer_c_offscreen = driver_namespace["shadertoy_buffer_c_offscreen"]
-                if not shadertoy_buffer_c_offscreen:
-                    continue
-                shadertoy_buffer_c_offscreen.bind()
-            elif sh == "shadertoy_buffer_d_shader":
-                shadertoy_buffer_d_offscreen = driver_namespace["shadertoy_buffer_d_offscreen"]
-                if not shadertoy_buffer_d_offscreen:
-                    continue
-                shadertoy_buffer_d_offscreen.bind()
-#            gpu.matrix.load_matrix(Matrix.Identity(4))
-#            gpu.matrix.load_projection_matrix(Matrix.Identity(4))
-
+        def render(sh, w, h):
             param = driver_namespace[sh]
             if not param:
-                continue
+                return
 #            print("Test:" + sh)
 
             (shader, batch, gtex) = param
             gpu.state.blend_set('ALPHA_PREMULT')
             shader.bind()
             try:
-                shader.uniform_float("iResolution", (region.width, region.height, 1.0)) # TODO: pixel aspect ratio
+                shader.uniform_float("iResolution", (w, h, 1.0)) # TODO: pixel aspect ratio
             except: pass
             try:
                 shader.uniform_float("iTime", t)
@@ -549,15 +518,31 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
             batch.draw(shader)
             gpu.state.blend_set('NONE')
 
-            if sh == "shadertoy_buffer_a_shader":
-                shadertoy_buffer_a_offscreen.unbind()
-            elif sh == "shadertoy_buffer_b_shader":
-                shadertoy_buffer_b_offscreen.unbind()
-            elif sh == "shadertoy_buffer_c_shader":
-                shadertoy_buffer_c_offscreen.unbind()
-            elif sh == "shadertoy_buffer_d_shader":
-                shadertoy_buffer_d_offscreen.unbind()
+        fb = driver_namespace["shadertoy_buffer_a_offscreen"]  # TODO: resize to region
+        if fb:
+            fb.bind()
+            render("shadertoy_buffer_a_shader", fb.width, fb.height)
+            fb.unbind()
 
+        fb = driver_namespace["shadertoy_buffer_b_offscreen"]
+        if fb:
+            fb.bind()
+            render("shadertoy_buffer_b_shader", fb.width, fb.height)
+            fb.unbind()
+
+        fb = driver_namespace["shadertoy_buffer_c_offscreen"]
+        if fb:
+            fb.bind()
+            render("shadertoy_buffer_c_shader", fb.width, fb.height)
+            fb.unbind()
+
+        fb = driver_namespace["shadertoy_buffer_d_offscreen"]
+        if fb:
+            fb.bind()
+            render("shadertoy_buffer_d_shader", fb.width, fb.height)
+            fb.unbind()
+
+        render("shadertoy_image_shader", region.width, region.height)
 
 class ShadertoyModalOperator(bpy.types.Operator):
     bl_idname = "shadertoy.modal_operator"
@@ -675,6 +660,8 @@ def text2shader(txt):
     # https://www.shadertoy.com/view/MsXGz8 (iChannelTime) -> ok
     # https://www.shadertoy.com/view/4s2Xzc (iChannelResolution) -> ok
     # https://www.shadertoy.com/view/XsBSDR (cubemap) -> wrong
+    # https://www.shadertoy.com/view/XdGXzm (multipass) -> ok
+    # https://www.shadertoy.com/view/Xsd3DB (multipass+texture) -> wrong??
 
     shader = gpu.types.GPUShader("""
 in vec2 pos;
@@ -731,9 +718,9 @@ def shadertoy_shader_update(self, context):
     region = [r for r in [area.regions for area in sc.areas if area.type == "VIEW_3D"][0] if r.type=="WINDOW"][0]
 
     def offscreen_free(key):
-        if driver_namespace["shadertoy_buffer_a_offscreen"]:
-            t = driver_namespace["shadertoy_buffer_a_offscreen"]
-            driver_namespace["shadertoy_buffer_a_offscreen"] = None
+        if driver_namespace[key]:
+            t = driver_namespace[key]
+            driver_namespace[key] = None
             t.free()
 
     offscreen_free("shadertoy_buffer_a_offscreen")
