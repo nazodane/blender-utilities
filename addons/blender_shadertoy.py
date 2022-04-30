@@ -388,7 +388,7 @@ def shadertoy_shaderid_update(self, context):
             ptxt.shadertoy_buffer_c = txt
         elif _type == "buffer" and output_id == "XdfGR8":
             ptxt.shadertoy_buffer_d = txt
-        elif _type == "cubemap" and output_id == "4dX3Rr":
+        elif _type == "cubemap":# and output_id == "4dX3Rr":
             ptxt.shadertoy_cubemap_a = txt
         else:
             print("shadertoy_shaderid_update: unsupported type and output_id: " + _type + "::" + output_id)
@@ -459,7 +459,7 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
         frame = int(modf(scene.frame_float)[1])
         mouse = driver_namespace["shadertoy_mouse"]
 
-        def render(sh, w, h):
+        def render(sh, w, h, raydir = None):
             param = driver_namespace[sh]
             if not param:
                 return
@@ -494,8 +494,19 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
 
             def texset(ch, tex):
                 sz = (0, 0, 1.0)
-                if type(tex) == gpu.types.GPUOffScreen:
+                if type(tex) == gpu.types.GPUOffScreen: # buffer
                     tex = tex.texture_color
+                elif type(tex) == tuple and type(tex[0]) == gpu.types.GPUOffScreen: # cubemap
+                    tex = gpu.types.GPUTexture(1024, format="RGBA32F", is_cubemap = True, \
+                        data=gpu.types.Buffer("FLOAT", (6,1024,1024,4), (
+                            tex[0].texture_color.read(),
+                            tex[1].texture_color.read(),
+                            tex[2].texture_color.read(),
+                            tex[3].texture_color.read(),
+                            tex[4].texture_color.read(),
+                            tex[5].texture_color.read()
+                        )))
+                    tex = None
                 if tex:
                     sz = (tex.width, tex.height, 1.0)
                     shader.uniform_sampler(ch, tex)
@@ -513,6 +524,9 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
             try:
                 shader.uniform_float("iChannelResolution", [sz1, sz2, sz3, sz4])
             except: pass
+
+            if raydir:
+                shader.uniform_float("_rayDir", raydir)
 
             # 描画
             batch.draw(shader)
@@ -541,6 +555,27 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
             fb.bind()
             render("shadertoy_buffer_d_shader", fb.width, fb.height)
             fb.unbind()
+
+        fbs = driver_namespace["shadertoy_cubemap_a_offscreen"]
+        if fbs:
+            fbs[0].bind()
+            render("shadertoy_cubemap_a_shader", 1024, 1024, (1.0, 0.0, 0.0))
+            fbs[0].unbind()
+            fbs[1].bind()
+            render("shadertoy_cubemap_a_shader", 1024, 1024, (0.0, 1.0, 0.0))
+            fbs[1].unbind()
+            fbs[2].bind()
+            render("shadertoy_cubemap_a_shader", 1024, 1024, (0.0, 0.0, 1.0))
+            fbs[2].unbind()
+            fbs[3].bind()
+            render("shadertoy_cubemap_a_shader", 1024, 1024, (-1.0, 0.0, 0.0))
+            fbs[3].unbind()
+            fbs[4].bind()
+            render("shadertoy_cubemap_a_shader", 1024, 1024, (0.0, -1.0, 0.0))
+            fbs[4].unbind()
+            fbs[5].bind()
+            render("shadertoy_cubemap_a_shader", 1024, 1024, (0.0, 0.0, -1.0))
+            fbs[5].unbind()
 
         render("shadertoy_image_shader", region.width, region.height)
 
@@ -619,23 +654,25 @@ def get_gtex(tex_name):
                 assert(img.size[0] * img.size[1] * 4 == sz)
                 buf[i*sz:(i+1)*sz] = img.pixels[:]
 
-            tex = ("Cube", gpu.types.GPUTexture(img.size[0], \
+            return ("Cube", gpu.types.GPUTexture(img.size[0], \
                            format="RGBA32F", is_cubemap = True, data=buf))
         else:
             img = bpy.data.images.load(fpath)
-            tex = ("2D", gpu.texture.from_image(img)) # should be fast (using cache)
+            return ("2D", gpu.texture.from_image(img)) # should be fast (using cache)
     elif tex_name in [l[0] for l in shadertoy_previs]:
         offscreen = None
         if tex_name == "buffer00.png":
-            offscreen = driver_namespace["shadertoy_buffer_a_offscreen"]
+            return ("2D", driver_namespace["shadertoy_buffer_a_offscreen"])
         elif tex_name == "buffer01.png":
-            offscreen = driver_namespace["shadertoy_buffer_b_offscreen"]
+            return ("2D", driver_namespace["shadertoy_buffer_b_offscreen"])
         elif tex_name == "buffer02.png":
-            offscreen = driver_namespace["shadertoy_buffer_c_offscreen"]
+            return ("2D", driver_namespace["shadertoy_buffer_c_offscreen"])
         elif tex_name == "buffer03.png":
-            offscreen = driver_namespace["shadertoy_buffer_d_offscreen"]
+            return ("2D", driver_namespace["shadertoy_buffer_d_offscreen"])
+        elif tex_name == "cubemap00.png":
+            return ("Cube", driver_namespace["shadertoy_cubemap_a_offscreen"])
 
-        tex = ("2D", offscreen)
+        tex = ("2D", None)
 
     return tex
 
@@ -643,7 +680,7 @@ def text2gtex(txt):
     return (get_gtex(str(txt.shadertoy_tex1)), get_gtex(str(txt.shadertoy_tex2)),
             get_gtex(str(txt.shadertoy_tex3)), get_gtex(str(txt.shadertoy_tex4)))
 
-def text2shader(txt):
+def text2shader(txt, _type):
     if not txt:
         return None
 
@@ -687,10 +724,12 @@ uniform sampler""" + gtex[3][0] + """ iChannel3;
 
 uniform vec4 iDate;
 //uniform float iSampleRate;
+uniform vec3 _rayDir;
 """ + code + """
 void main(){
     vec4 _fragColor;
-    mainImage(_fragColor, gl_FragCoord.xy);
+    """ + ("mainImage(_fragColor, gl_FragCoord.xy);" if _type=="Image" else \
+           "mainCubemap(_fragColor, gl_FragCoord.xy, vec3(0.0, 0.0, 0.0), _rayDir);")+ """
     FragColor = vec4(_fragColor.xyz, 1.0);
 }
 """)
@@ -728,6 +767,12 @@ def shadertoy_shader_update(self, context):
     offscreen_free("shadertoy_buffer_c_offscreen")
     offscreen_free("shadertoy_buffer_d_offscreen")
 
+    if driver_namespace["shadertoy_cubemap_a_offscreen"]:
+        tt = driver_namespace["shadertoy_cubemap_a_offscreen"]
+        driver_namespace["shadertoy_cubemap_a_offscreen"] = None
+        for t in tt:
+            t.free()
+
     if txt.shadertoy_buffer_a:
         driver_namespace["shadertoy_buffer_a_offscreen"] = gpu.types.GPUOffScreen(region.width, region.height)
     if txt.shadertoy_buffer_b:
@@ -737,12 +782,20 @@ def shadertoy_shader_update(self, context):
     if txt.shadertoy_buffer_d:
         driver_namespace["shadertoy_buffer_d_offscreen"] = gpu.types.GPUOffScreen(region.width, region.height)
 
-    driver_namespace["shadertoy_image_shader"] = text2shader(txt)
-    driver_namespace["shadertoy_buffer_a_shader"] = text2shader(txt.shadertoy_buffer_a)
-    driver_namespace["shadertoy_buffer_b_shader"] = text2shader(txt.shadertoy_buffer_b)
-    driver_namespace["shadertoy_buffer_c_shader"] = text2shader(txt.shadertoy_buffer_c)
-    driver_namespace["shadertoy_buffer_d_shader"] = text2shader(txt.shadertoy_buffer_d)
-    driver_namespace["shadertoy_cubemap_a_shader"] = text2shader(txt.shadertoy_cubemap_a)
+    if txt.shadertoy_cubemap_a:
+        driver_namespace["shadertoy_cubemap_a_offscreen"] = (gpu.types.GPUOffScreen(1024, 1024, format="RGBA32F"), \
+                                                             gpu.types.GPUOffScreen(1024, 1024, format="RGBA32F"), \
+                                                             gpu.types.GPUOffScreen(1024, 1024, format="RGBA32F"), \
+                                                             gpu.types.GPUOffScreen(1024, 1024, format="RGBA32F"), \
+                                                             gpu.types.GPUOffScreen(1024, 1024, format="RGBA32F"), \
+                                                             gpu.types.GPUOffScreen(1024, 1024, format="RGBA32F"))
+
+    driver_namespace["shadertoy_image_shader"] = text2shader(txt, "Image")
+    driver_namespace["shadertoy_buffer_a_shader"] = text2shader(txt.shadertoy_buffer_a, "Image")
+    driver_namespace["shadertoy_buffer_b_shader"] = text2shader(txt.shadertoy_buffer_b, "Image")
+    driver_namespace["shadertoy_buffer_c_shader"] = text2shader(txt.shadertoy_buffer_c, "Image")
+    driver_namespace["shadertoy_buffer_d_shader"] = text2shader(txt.shadertoy_buffer_d, "Image")
+    driver_namespace["shadertoy_cubemap_a_shader"] = text2shader(txt.shadertoy_cubemap_a, "Cubemap")
 
 def shadertoy_parent_update(self, context):
     text = self
@@ -821,6 +874,8 @@ def init_props():
     driver_namespace["shadertoy_buffer_c_offscreen"] = \
     driver_namespace["shadertoy_buffer_d_offscreen"] = None
 
+    driver_namespace["shadertoy_cubemap_a_offscreen"] = None
+
     scene.shadertoy_code = PointerProperty(type=bpy.types.Text, name="Shadertoy Code")
 
 def clear_props():
@@ -874,6 +929,9 @@ def clear_props():
         del driver_namespace["shadertoy_buffer_c_offscreen"]
     if "shadertoy_buffer_d_offscreen" in driver_namespace:
         del driver_namespace["shadertoy_buffer_d_offscreen"]
+
+    if "shadertoy_cubemap_a_offscreen" in driver_namespace:
+        del driver_namespace["shadertoy_cubemap_a_offscreen"]
 
     if hasattr(scene, "shadertoy_code"):
         del scene.shadertoy_code
