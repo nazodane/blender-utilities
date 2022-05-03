@@ -30,7 +30,6 @@ from bpy.props import (
     EnumProperty,
     CollectionProperty,
 )
-from bpy.app import driver_namespace
 
 bl_info = {
     "name": "Calculator",
@@ -591,6 +590,8 @@ class CALC_PT_CustomPanel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+#        layout.scale_y = 1.5
+
         scene = context.scene
         layout.prop(scene, "calc_exp", text="Expression")
         row = layout.row(align=True)
@@ -793,7 +794,9 @@ def init_props():
     scene.calc_is_inited = BoolProperty(name="Is Calculator Inited",
                                         default=False)
 
-    driver_namespace["is_calc_space"] = {}
+    # area, space, and region have no custom properties...
+    screen = bpy.types.Screen
+    screen.is_calc_screen = BoolProperty(name="Is Calculator Screen")
 
 def clear_props():
     del calc_exp
@@ -806,12 +809,10 @@ def clear_props():
     del scene.calc_mode
     del scene.calc_is_live
     del scene.calc_is_inited
-    del driver_namespace["is_calc_space"]
-
+    del screen.is_calc_screen
 
 def calc_inner_poll(self, context, pref_cls):
-    if context.space_data in driver_namespace["is_calc_space"] and \
-       driver_namespace["is_calc_space"][context.space_data] == True:
+    if context.screen.is_calc_screen == True:
         return False
 
     if hasattr(pref_cls, "poll"):
@@ -850,8 +851,7 @@ class CALC_PT_PrefPanel(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        if context.space_data in driver_namespace["is_calc_space"] and \
-           driver_namespace["is_calc_space"][context.space_data] == True:
+        if context.screen.is_calc_screen == True:
             return True
         return False
 
@@ -861,9 +861,6 @@ class CALC_PT_PrefPanel(bpy.types.Panel):
 
     def draw(self, context):
         CALC_PT_CustomPanel.draw(self, context)
-
-
-
 
 classes = [
     CALC_PT_CustomPanel,
@@ -996,6 +993,11 @@ classes = [
 ]
 
 addon_keymaps = []
+
+def calc_prefmenu(self, context):
+    layout = self.layout
+    screen = context.screen
+    layout.prop(screen, "is_calc_screen")
 
 def register():
     for c in classes:
@@ -1249,7 +1251,17 @@ def register():
     addon_keymaps.append((km, kmi))
     # TODO: del / left / right
 
+    bpy.types.USERPREF_MT_view.append(calc_prefmenu)
+
 def unregister():
+    try:
+        bpy.types.USERPREF_MT_view.remove(calc_prefmenu)
+    except: pass
+
+    for km, kmi in addon_keymaps:
+        km.keymap_items.remove(kmi)
+    addon_keymaps.clear()
+
     clear_props()
     for c in classes:
         bpy.utils.unregister_class(c)
@@ -1257,9 +1269,6 @@ def unregister():
         bpy.app.translations.unregister("blender_calculator")
     except: pass
 
-    for km, kmi in addon_keymaps:
-        km.keymap_items.remove(kmi)
-    addon_keymaps.clear()
 
 
 if __name__ == "__main__":
