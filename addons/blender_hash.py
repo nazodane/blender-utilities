@@ -226,11 +226,32 @@ def hash_calc(self, bin, func):
     return func(bin).hexdigest() if not self.hash_is_hmac else \
            hmac.new(self.hash_hmac_salt.encode(), bin, func).hexdigest()
 
+def hash_reset(self):
+    self["hash_calculated_md5"] = \
+    self["hash_calculated_sha1"] = \
+    self["hash_calculated_sha224"] = \
+    self["hash_calculated_sha256"] = \
+    self["hash_calculated_sha384"] = \
+    self["hash_calculated_sha512"] = \
+    self["hash_calculated_sha3_224"] = \
+    self["hash_calculated_sha3_256"] = \
+    self["hash_calculated_sha3_384"] = \
+    self["hash_calculated_sha3_512"] = \
+    self["hash_calculated_blake2b"] = \
+    self["hash_calculated_blake2s"] = \
+    self["hash_calculated_crc32"] = \
+    self["hash_calculated_adler32"] = ""
+
+import os
 def hash_update(self, context):
+    hash_reset(self)
     if self.hash_input_type == "TEXT":
         bin = self.hash_base_text.encode()
     else:
-        bin = open(bpy.path.abspath(self.hash_base_file), "rb").read()
+        p = bpy.path.abspath(self.hash_base_file)
+        if not os.path.exists(p):
+            return
+        bin = open(p, "rb").read()
     if self.show_hash_md5:
         self["hash_calculated_md5"] = hex_to_format(self, hash_calc(self, bin, md5))
     if self.show_hash_sha1:
