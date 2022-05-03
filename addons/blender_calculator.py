@@ -450,6 +450,8 @@ CALC_OT_Input_X = CALC_new_input_class("X", "ux")
 CALC_OT_Input_Y = CALC_new_input_class("Y", "uy")
 CALC_OT_Input_Z = CALC_new_input_class("Z", "uz")
 
+CALC_OT_Input_underbar = CALC_new_input_class("_", "underbar")
+
 CALC_OT_Input_dot = CALC_new_input_class(".", "dot")
 CALC_OT_Input_percent = CALC_new_input_class("%", "percent")
 CALC_OT_Input_plus = CALC_new_input_class("+", "plus")
@@ -957,6 +959,7 @@ classes = [
     CALC_OT_Input_X,
     CALC_OT_Input_Y,
     CALC_OT_Input_Z,
+    CALC_OT_Input_underbar,
     CALC_OT_Input_dot,
     CALC_OT_Input_percent,
     CALC_OT_Input_plus,
@@ -1237,6 +1240,10 @@ def register():
     addon_keymaps.append((km, kmi))
     kmi = km.keymap_items.new(CALC_OT_Input_Z.bl_idname, type='Z', shift=True, value='PRESS')
     addon_keymaps.append((km, kmi))
+
+#   conflict with "|"
+#    kmi = km.keymap_items.new(CALC_OT_Input_underbar.bl_idname, type='BACK_SLASH', shift=True, value='PRESS') # jis
+#    addon_keymaps.append((km, kmi))
 
     kmi = km.keymap_items.new(CALC_OT_Input_backspace.bl_idname, type='BACK_SPACE', value='PRESS', repeat=True)
     addon_keymaps.append((km, kmi))
