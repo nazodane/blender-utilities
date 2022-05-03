@@ -30,6 +30,7 @@ from bpy.props import (
     EnumProperty,
     CollectionProperty,
 )
+from bpy.app import driver_namespace
 
 bl_info = {
     "name": "Calculator",
@@ -348,7 +349,8 @@ class CALC_OT_InputBase():
 
     @classmethod
     def poll(cls, context):
-        if context.space_data.type != "VIEW_3D":
+        if context.space_data.type != "VIEW_3D" and \
+           context.space_data.type != "PREFERENCES":
             return False
         return True
 
@@ -789,6 +791,7 @@ def init_props():
     scene.calc_is_inited = BoolProperty(name="Is Calculator Inited",
                                         default=False)
 
+    driver_namespace["is_calc_space"] = {}
 
 def clear_props():
     del calc_exp
@@ -801,6 +804,64 @@ def clear_props():
     del scene.calc_mode
     del scene.calc_is_live
     del scene.calc_is_inited
+    del driver_namespace["is_calc_space"]
+
+
+def calc_inner_poll(self, context, pref_cls):
+    if context.space_data in driver_namespace["is_calc_space"] and \
+       driver_namespace["is_calc_space"][context.space_data] == True:
+        return False
+
+    if hasattr(pref_cls, "poll"):
+        return pref_cls.poll(context)
+
+    return True
+
+def perf_overrides():
+    import os, sys
+    p = os.path.join(bpy.utils.system_resource('SCRIPTS'), 'startup', 'bl_ui')
+
+    if p not in sys.path:
+        sys.path.append(p)
+
+    import importlib
+    perf_mod = importlib.import_module("space_userpref")
+
+    def calc_pref_override(cls_name, orig_cls):
+        return type(cls_name, (orig_cls, bpy.types.Panel), {
+            "poll": classmethod(lambda self, context: calc_inner_poll(self, context, orig_cls) ),
+        })
+
+    for perf_cls in perf_mod.classes:
+        if bpy.types.Panel in perf_cls.__mro__:# and hasattr(perf_cls, "bl_context"):
+            exec(perf_cls.__name__ + ' = calc_pref_override("' + perf_cls.__name__ + '", perf_cls)')
+            exec("bpy.utils.register_class(" + perf_cls.__name__ + ")")
+
+
+class CALC_PT_PrefPanel(bpy.types.Panel):
+    bl_label = "Calculator"
+    bl_space_type = 'PREFERENCES'
+    bl_region_type = 'WINDOW'
+    bl_category = "Calculator"
+    bl_context = ""
+    bl_options = {'HIDE_HEADER'}
+
+    @classmethod
+    def poll(cls, context):
+        if context.space_data in driver_namespace["is_calc_space"] and \
+           driver_namespace["is_calc_space"][context.space_data] == True:
+            return True
+        return False
+
+#    def draw_header(self, context):
+#        layout = self.layout
+#        layout.label(text="", icon='PLUGIN')
+
+    def draw(self, context):
+        CALC_PT_CustomPanel.draw(self, context)
+
+
+
 
 classes = [
     CALC_PT_CustomPanel,
@@ -928,6 +989,7 @@ classes = [
     CALC_OT_Input_sexp,
     CALC_OT_Input_equal,
     CALC_OT_Input_backspace,
+    CALC_PT_PrefPanel,
 ]
 
 addon_keymaps = []
@@ -935,6 +997,7 @@ addon_keymaps = []
 def register():
     for c in classes:
         bpy.utils.register_class(c)
+    perf_overrides()
     init_props()
     try:
         bpy.app.translations.register("blender_calculator", translation_dict)
