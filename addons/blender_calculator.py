@@ -799,17 +799,30 @@ def init_props():
     screen.is_calc_screen = BoolProperty(name="Is Calculator Screen")
 
 def clear_props():
-    del calc_exp
-    del scene.calc_hist
-    del scene.active_calc_hist_index
-    del scene.calc_vars
-    del scene.active_calc_vars_index
-    del scene.calc_funcs
-    del scene.active_calc_funcs_index
-    del scene.calc_mode
-    del scene.calc_is_live
-    del scene.calc_is_inited
-    del screen.is_calc_screen
+    scene = bpy.types.Scene
+    screen = bpy.types.Screen
+    if hasattr(scene, "calc_exp"):
+        del scene.calc_exp
+    if hasattr(scene, "calc_hist"):
+        del scene.calc_hist
+    if hasattr(scene, "active_calc_hist_index"):
+        del scene.active_calc_hist_index
+    if hasattr(scene, "calc_vars"):
+        del scene.calc_vars
+    if hasattr(scene, "active_calc_vars_index"):
+        del scene.active_calc_vars_index
+    if hasattr(scene, "calc_funcs"):
+        del scene.calc_funcs
+    if hasattr(scene, "active_calc_funcs_index"):
+        del scene.active_calc_funcs_index
+    if hasattr(scene, "calc_mode"):
+        del scene.calc_mode
+    if hasattr(scene, "calc_is_live"):
+        del scene.calc_is_live
+    if hasattr(scene, "calc_is_inited"):
+        del scene.calc_is_inited
+    if hasattr(screen, "is_calc_screen"):
+        del screen.is_calc_screen
 
 def calc_inner_poll(self, context, pref_cls):
     if context.screen.is_calc_screen == True:
