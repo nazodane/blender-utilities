@@ -346,6 +346,12 @@ class CALC_OT_InputBase():
             scene.calc_exp += self.c
         return {'FINISHED'}
 
+    @classmethod
+    def poll(cls, context):
+        if context.space_data.type != "VIEW_3D":
+            return False
+        return True
+
 def CALC_new_input_class(c, id = None):
     if not id:
         id = c
@@ -365,6 +371,83 @@ CALC_OT_Input_6 = CALC_new_input_class("6")
 CALC_OT_Input_7 = CALC_new_input_class("7")
 CALC_OT_Input_8 = CALC_new_input_class("8")
 CALC_OT_Input_9 = CALC_new_input_class("9")
+
+CALC_OT_Input_sub0 = CALC_new_input_class("₀", "sub0")
+CALC_OT_Input_sub1 = CALC_new_input_class("₁", "sub1")
+CALC_OT_Input_sub2 = CALC_new_input_class("₂", "sub2")
+CALC_OT_Input_sub3 = CALC_new_input_class("₃", "sub3")
+CALC_OT_Input_sub4 = CALC_new_input_class("₄", "sub4")
+CALC_OT_Input_sub5 = CALC_new_input_class("₅", "sub5")
+CALC_OT_Input_sub6 = CALC_new_input_class("₆", "sub6")
+CALC_OT_Input_sub7 = CALC_new_input_class("₇", "sub7")
+CALC_OT_Input_sub8 = CALC_new_input_class("₈", "sub8")
+CALC_OT_Input_sub9 = CALC_new_input_class("₉", "sub9")
+
+CALC_OT_Input_super0 = CALC_new_input_class("⁰", "super0")
+CALC_OT_Input_super1 = CALC_new_input_class("¹", "super1")
+CALC_OT_Input_super2 = CALC_new_input_class("²", "super2")
+CALC_OT_Input_super3 = CALC_new_input_class("³", "super3")
+CALC_OT_Input_super4 = CALC_new_input_class("⁴", "super4")
+CALC_OT_Input_super5 = CALC_new_input_class("⁵", "super5")
+CALC_OT_Input_super6 = CALC_new_input_class("⁶", "super6")
+CALC_OT_Input_super7 = CALC_new_input_class("⁷", "super7")
+CALC_OT_Input_super8 = CALC_new_input_class("⁸", "super8")
+CALC_OT_Input_super9 = CALC_new_input_class("⁹", "super9")
+
+CALC_OT_Input_a = CALC_new_input_class("a")
+CALC_OT_Input_b = CALC_new_input_class("b")
+CALC_OT_Input_c = CALC_new_input_class("c")
+CALC_OT_Input_d = CALC_new_input_class("d")
+CALC_OT_Input_e = CALC_new_input_class("e")
+CALC_OT_Input_f = CALC_new_input_class("f")
+CALC_OT_Input_g = CALC_new_input_class("g")
+CALC_OT_Input_h = CALC_new_input_class("h")
+CALC_OT_Input_i = CALC_new_input_class("i")
+CALC_OT_Input_j = CALC_new_input_class("j")
+CALC_OT_Input_k = CALC_new_input_class("k")
+CALC_OT_Input_l = CALC_new_input_class("l")
+CALC_OT_Input_m = CALC_new_input_class("m")
+CALC_OT_Input_n = CALC_new_input_class("n")
+CALC_OT_Input_o = CALC_new_input_class("o")
+CALC_OT_Input_p = CALC_new_input_class("p")
+CALC_OT_Input_q = CALC_new_input_class("q")
+CALC_OT_Input_r = CALC_new_input_class("r")
+CALC_OT_Input_s = CALC_new_input_class("s")
+CALC_OT_Input_t = CALC_new_input_class("t")
+CALC_OT_Input_u = CALC_new_input_class("u")
+CALC_OT_Input_v = CALC_new_input_class("v")
+CALC_OT_Input_w = CALC_new_input_class("w")
+CALC_OT_Input_x = CALC_new_input_class("x")
+CALC_OT_Input_y = CALC_new_input_class("y")
+CALC_OT_Input_z = CALC_new_input_class("z")
+
+CALC_OT_Input_A = CALC_new_input_class("A", "ua")
+CALC_OT_Input_B = CALC_new_input_class("B", "ub")
+CALC_OT_Input_C = CALC_new_input_class("C", "uc")
+CALC_OT_Input_D = CALC_new_input_class("D", "ud")
+CALC_OT_Input_E = CALC_new_input_class("E", "ue")
+CALC_OT_Input_F = CALC_new_input_class("F", "uf")
+CALC_OT_Input_G = CALC_new_input_class("G", "ug")
+CALC_OT_Input_H = CALC_new_input_class("H", "uh")
+CALC_OT_Input_I = CALC_new_input_class("I", "ui")
+CALC_OT_Input_J = CALC_new_input_class("J", "uj")
+CALC_OT_Input_K = CALC_new_input_class("K", "uk")
+CALC_OT_Input_L = CALC_new_input_class("L", "ul")
+CALC_OT_Input_M = CALC_new_input_class("M", "um")
+CALC_OT_Input_N = CALC_new_input_class("N", "un")
+CALC_OT_Input_O = CALC_new_input_class("O", "uo")
+CALC_OT_Input_P = CALC_new_input_class("P", "up")
+CALC_OT_Input_Q = CALC_new_input_class("Q", "uq")
+CALC_OT_Input_R = CALC_new_input_class("R", "ur")
+CALC_OT_Input_S = CALC_new_input_class("S", "us")
+CALC_OT_Input_T = CALC_new_input_class("T", "ut")
+CALC_OT_Input_U = CALC_new_input_class("U", "uu")
+CALC_OT_Input_V = CALC_new_input_class("V", "uv")
+CALC_OT_Input_W = CALC_new_input_class("W", "uw")
+CALC_OT_Input_X = CALC_new_input_class("X", "ux")
+CALC_OT_Input_Y = CALC_new_input_class("Y", "uy")
+CALC_OT_Input_Z = CALC_new_input_class("Z", "uz")
+
 CALC_OT_Input_dot = CALC_new_input_class(".", "dot")
 CALC_OT_Input_percent = CALC_new_input_class("%", "percent")
 CALC_OT_Input_plus = CALC_new_input_class("+", "plus")
@@ -380,7 +463,7 @@ CALC_OT_Input_pow = CALC_new_input_class("^", "pow")
 CALC_OT_Input_sqrt = CALC_new_input_class("√", "sqrt")
 CALC_OT_Input_factorial = CALC_new_input_class("!", "factorial")
 CALC_OT_Input_imag = CALC_new_input_class("i", "imag")
-CALC_OT_Input_abs = CALC_new_input_class("abs")
+CALC_OT_Input_abs = CALC_new_input_class("|", "abs")
 CALC_OT_Input_arg = CALC_new_input_class("arg")
 CALC_OT_Input_log = CALC_new_input_class("log")
 CALC_OT_Input_ln = CALC_new_input_class("ln")
@@ -394,11 +477,30 @@ CALC_OT_Input_sinh = CALC_new_input_class("sinh")
 CALC_OT_Input_cosh = CALC_new_input_class("cosh")
 CALC_OT_Input_tanh = CALC_new_input_class("tanh")
 CALC_OT_Input_pi = CALC_new_input_class("π", "pi")
-CALC_OT_Input_e = CALC_new_input_class("e")
-CALC_OT_Input_sexp = CALC_new_input_class("×10^", "sexp")
 
 CALC_OT_Input_equal = CALC_new_input_class("=", "equal")
 
+class CALC_OT_Input_sexp(bpy.types.Operator):
+    bl_idname = "calc.input_sexp"
+    bl_label = "Input sexp"
+    bl_description = "Input sexp"
+    bl_options = {'REGISTER', 'UNDO'}
+    def execute(self, context):
+        scene = context.scene
+        scene.calc_exp += "×10"
+        scene.calc_is_superscript_input = True
+        return {'FINISHED'}
+
+class CALC_OT_Input_backspace(bpy.types.Operator):
+    bl_idname = "calc.input_backspace"
+    bl_label = "Input backspace"
+    bl_description = "Input backspace"
+    bl_options = {'REGISTER', 'UNDO'}
+    def execute(self, context):
+        scene = context.scene
+        if len(scene.calc_exp):
+            scene.calc_exp = scene.calc_exp[0:-1]
+        return {'FINISHED'}
 
 class CALC_OT_ExpClear(bpy.types.Operator):
     bl_idname = "calc.expclear"
@@ -722,6 +824,78 @@ classes = [
     CALC_OT_Input_7,
     CALC_OT_Input_8,
     CALC_OT_Input_9,
+    CALC_OT_Input_sub0,
+    CALC_OT_Input_sub1,
+    CALC_OT_Input_sub2,
+    CALC_OT_Input_sub3,
+    CALC_OT_Input_sub4,
+    CALC_OT_Input_sub5,
+    CALC_OT_Input_sub6,
+    CALC_OT_Input_sub7,
+    CALC_OT_Input_sub8,
+    CALC_OT_Input_sub9,
+    CALC_OT_Input_super0,
+    CALC_OT_Input_super1,
+    CALC_OT_Input_super2,
+    CALC_OT_Input_super3,
+    CALC_OT_Input_super4,
+    CALC_OT_Input_super5,
+    CALC_OT_Input_super6,
+    CALC_OT_Input_super7,
+    CALC_OT_Input_super8,
+    CALC_OT_Input_super9,
+    CALC_OT_Input_a,
+    CALC_OT_Input_b,
+    CALC_OT_Input_c,
+    CALC_OT_Input_d,
+    CALC_OT_Input_e,
+    CALC_OT_Input_f,
+    CALC_OT_Input_g,
+    CALC_OT_Input_h,
+    CALC_OT_Input_i,
+    CALC_OT_Input_j,
+    CALC_OT_Input_k,
+    CALC_OT_Input_l,
+    CALC_OT_Input_m,
+    CALC_OT_Input_n,
+    CALC_OT_Input_o,
+    CALC_OT_Input_p,
+    CALC_OT_Input_q,
+    CALC_OT_Input_r,
+    CALC_OT_Input_s,
+    CALC_OT_Input_t,
+    CALC_OT_Input_u,
+    CALC_OT_Input_v,
+    CALC_OT_Input_w,
+    CALC_OT_Input_x,
+    CALC_OT_Input_y,
+    CALC_OT_Input_z,
+    CALC_OT_Input_A,
+    CALC_OT_Input_B,
+    CALC_OT_Input_C,
+    CALC_OT_Input_D,
+    CALC_OT_Input_E,
+    CALC_OT_Input_F,
+    CALC_OT_Input_G,
+    CALC_OT_Input_H,
+    CALC_OT_Input_I,
+    CALC_OT_Input_J,
+    CALC_OT_Input_K,
+    CALC_OT_Input_L,
+    CALC_OT_Input_M,
+    CALC_OT_Input_N,
+    CALC_OT_Input_O,
+    CALC_OT_Input_P,
+    CALC_OT_Input_Q,
+    CALC_OT_Input_R,
+    CALC_OT_Input_S,
+    CALC_OT_Input_T,
+    CALC_OT_Input_U,
+    CALC_OT_Input_V,
+    CALC_OT_Input_W,
+    CALC_OT_Input_X,
+    CALC_OT_Input_Y,
+    CALC_OT_Input_Z,
     CALC_OT_Input_dot,
     CALC_OT_Input_percent,
     CALC_OT_Input_plus,
@@ -751,10 +925,12 @@ classes = [
     CALC_OT_Input_cosh,
     CALC_OT_Input_tanh,
     CALC_OT_Input_pi,
-    CALC_OT_Input_e,
     CALC_OT_Input_sexp,
     CALC_OT_Input_equal,
+    CALC_OT_Input_backspace,
 ]
+
+addon_keymaps = []
 
 def register():
     for c in classes:
@@ -764,6 +940,245 @@ def register():
         bpy.app.translations.register("blender_calculator", translation_dict)
     except: pass
 
+    wm = bpy.context.window_manager
+    kc = wm.keyconfigs.addon
+    if not kc:
+        return
+#    km = wm.keyconfigs.addon.keymaps.new(name='Preferences', space_type='PREFERENCES')
+#    km = wm.keyconfigs.addon.keymaps.new(name='3D View', space_type='VIEW_3D', region_type="UI")
+#    km = wm.keyconfigs.addon.keymaps.new(name='3D View', space_type='VIEW_3D')
+    km = wm.keyconfigs.addon.keymaps.new(name='Window')
+    kmi = km.keymap_items.new(CALC_OT_Input_0.bl_idname, type='ZERO', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_1.bl_idname, type='ONE', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_2.bl_idname, type='TWO', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_3.bl_idname, type='THREE', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_4.bl_idname, type='FOUR', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_5.bl_idname, type='FIVE', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_6.bl_idname, type='SIX', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_7.bl_idname, type='SEVEN', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_8.bl_idname, type='EIGHT', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_9.bl_idname, type='NINE', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_dot.bl_idname, type='PERIOD', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_dot.bl_idname, type='COMMA', value='PRESS') # for europe
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_percent.bl_idname, type='FIVE', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_div.bl_idname, type='SLASH', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_minus.bl_idname, type='MINUS', value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+# XXX: mul: shift+colon in jis keyboard, shift+8 in us
+#      NO WAY TO ADD THIS SHORTCUT IN JIS KEYBOARD!!!
+#    kmi = km.keymap_items.new(CALC_OT_Input_mul.bl_idname, type='EIGHT', shift=True, value='PRESS') # us
+#    addon_keymaps.append((km, kmi))
+
+#    kmi = km.keymap_items.new(CALC_OT_Input_plus.bl_idname, type='SEMI_COLON', shift=True, value='PRESS') #jis (not working)
+#    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_plus.bl_idname, type='PLUS', shift=True, value='PRESS') #jis (hmm...)
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(CALC_OT_Input_lp.bl_idname, type='EIGHT', shift=True, value='PRESS') # jis
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_rp.bl_idname, type='NINE', shift=True, value='PRESS') # jis
+    addon_keymaps.append((km, kmi))
+
+#    kmi = km.keymap_items.new(CALC_OT_Input_equal.bl_idname, type='MINUS', shift=True, value='PRESS') #jis (not working)
+#    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_equal.bl_idname, type='EQUAL', shift=True, value='PRESS') #jis (hmm...)
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(CALC_OT_Input_equal.bl_idname, type='RET', value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(CALC_OT_Input_sq.bl_idname, type='TWO', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_sqrt.bl_idname, type='R', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(CALC_OT_ExpClear.bl_idname, type='ESC', value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(CALC_OT_Input_sexp.bl_idname, type='E', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(CALC_OT_Input_inv.bl_idname, type='I', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(CALC_OT_Input_factorial.bl_idname, type='ONE', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(CALC_OT_Input_abs.bl_idname, type='BACK_SLASH', shift=True, value='PRESS') # jis
+    addon_keymaps.append((km, kmi))
+
+    # CALC_OT_Input_pow -> ^ @jis, shift+6 @us
+
+    kmi = km.keymap_items.new(CALC_OT_Input_pi.bl_idname, type='P', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(CALC_OT_Input_sub0.bl_idname, type='ZERO', alt=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_sub1.bl_idname, type='ONE', alt=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_sub2.bl_idname, type='TWO', alt=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_sub3.bl_idname, type='THREE', alt=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_sub4.bl_idname, type='FOUR', alt=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_sub5.bl_idname, type='FIVE', alt=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_sub6.bl_idname, type='SIX', alt=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_sub7.bl_idname, type='SEVEN', alt=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_sub8.bl_idname, type='EIGHT', alt=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_sub9.bl_idname, type='NINE', alt=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(CALC_OT_Input_super0.bl_idname, type='ZERO', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_super1.bl_idname, type='ONE', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_super2.bl_idname, type='TWO', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_super3.bl_idname, type='THREE', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_super4.bl_idname, type='FOUR', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_super5.bl_idname, type='FIVE', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_super6.bl_idname, type='SIX', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_super7.bl_idname, type='SEVEN', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_super8.bl_idname, type='EIGHT', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_super9.bl_idname, type='NINE', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(CALC_OT_Input_a.bl_idname, type='A', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_b.bl_idname, type='B', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_c.bl_idname, type='C', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_d.bl_idname, type='D', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_e.bl_idname, type='E', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_f.bl_idname, type='F', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_g.bl_idname, type='G', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_h.bl_idname, type='H', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_i.bl_idname, type='I', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_j.bl_idname, type='J', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_k.bl_idname, type='K', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_l.bl_idname, type='L', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_m.bl_idname, type='M', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_n.bl_idname, type='N', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_o.bl_idname, type='O', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_p.bl_idname, type='P', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_q.bl_idname, type='Q', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_r.bl_idname, type='R', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_s.bl_idname, type='S', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_t.bl_idname, type='T', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_u.bl_idname, type='U', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_v.bl_idname, type='V', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_w.bl_idname, type='W', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_x.bl_idname, type='X', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_y.bl_idname, type='Y', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_z.bl_idname, type='Z', value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(CALC_OT_Input_A.bl_idname, type='A', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_B.bl_idname, type='B', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_C.bl_idname, type='C', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_D.bl_idname, type='D', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_E.bl_idname, type='E', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_F.bl_idname, type='F', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_G.bl_idname, type='G', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_H.bl_idname, type='H', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_I.bl_idname, type='I', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_J.bl_idname, type='J', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_K.bl_idname, type='K', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_L.bl_idname, type='L', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_M.bl_idname, type='M', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_N.bl_idname, type='N', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_O.bl_idname, type='O', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_P.bl_idname, type='P', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_Q.bl_idname, type='Q', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_R.bl_idname, type='R', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_S.bl_idname, type='S', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_T.bl_idname, type='T', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_U.bl_idname, type='U', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_V.bl_idname, type='V', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_W.bl_idname, type='W', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_X.bl_idname, type='X', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_Y.bl_idname, type='Y', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(CALC_OT_Input_Z.bl_idname, type='Z', shift=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(CALC_OT_Input_backspace.bl_idname, type='BACK_SPACE', value='PRESS', repeat=True)
+    addon_keymaps.append((km, kmi))
+    # TODO: del / left / right
+
 def unregister():
     clear_props()
     for c in classes:
@@ -771,6 +1186,11 @@ def unregister():
     try:
         bpy.app.translations.unregister("blender_calculator")
     except: pass
+
+    for km, kmi in addon_keymaps:
+        km.keymap_items.remove(kmi)
+    addon_keymaps.clear()
+
 
 if __name__ == "__main__":
     register()
