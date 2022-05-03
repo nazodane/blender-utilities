@@ -348,7 +348,7 @@ class CALC_OT_InputBase():
 
     @classmethod
     def poll(cls, context):
-        if context.space_data.type != "VIEW_3D" and \
+        if context.space_data and context.space_data.type != "VIEW_3D" and \
            context.space_data.type != "PREFERENCES":
             return False
         return True
