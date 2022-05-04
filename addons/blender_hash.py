@@ -462,38 +462,6 @@ def init_props():
         update=hash_update
     )
 
-    # area, space, and region have no custom properties...
-    screen = bpy.types.Screen
-    screen.is_hash_screen = BoolProperty(name="Is Hash Screen")
-
-def hash_inner_poll(self, context, pref_cls):
-    if context.screen.is_hash_screen == True:
-        return False
-
-    if hasattr(pref_cls, "poll"):
-        return pref_cls.poll(context)
-
-    return True
-
-def perf_overrides():
-    import os, sys
-    p = os.path.join(bpy.utils.system_resource('SCRIPTS'), 'startup', 'bl_ui')
-
-    if p not in sys.path:
-        sys.path.append(p)
-
-    import importlib
-    perf_mod = importlib.import_module("space_userpref")
-
-    def hash_pref_override(cls_name, orig_cls):
-        return type(cls_name, (orig_cls, bpy.types.Panel), {
-            "poll": classmethod(lambda self, context: hash_inner_poll(self, context, orig_cls) ),
-        })
-
-    for perf_cls in perf_mod.classes:
-        if bpy.types.Panel in perf_cls.__mro__:# and hasattr(perf_cls, "bl_context"):
-            exec(perf_cls.__name__ + ' = hash_pref_override("' + perf_cls.__name__ + '", perf_cls)')
-            exec("bpy.utils.register_class(" + perf_cls.__name__ + ")")
 
 class HASH_PT_PrefPanel(bpy.types.Panel):
     bl_label = "Hash"
@@ -505,7 +473,7 @@ class HASH_PT_PrefPanel(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        if context.screen.is_hash_screen == True:
+        if context.screen.pref_space_type == "Hash":
             return True
         return False
 
@@ -515,11 +483,6 @@ class HASH_PT_PrefPanel(bpy.types.Panel):
 
     def draw(self, context):
         HASH_PT_CustomPanel.draw(self, context)
-
-def hash_prefmenu(self, context):
-    layout = self.layout
-    screen = context.screen
-    layout.prop(screen, "is_hash_screen")
 
 def clear_props():
     scene = bpy.types.Scene
@@ -566,29 +529,25 @@ def clear_props():
 
     del scene.hash_digest_format
 
-    del screen.is_hash_screen
-
 classes = [
     HASH_PT_CustomPanel,
     HASH_MT_Default,
     HASH_PT_PrefPanel,
 ]
 
+from blender_perf_overrides import perfoverride_register, perfoverride_unregister
 
 def register():
     for c in classes:
         bpy.utils.register_class(c)
-    perf_overrides()
+    perfoverride_register("Hash")
     init_props()
     try:
         bpy.app.translations.register("blender_hash", translation_dict)
     except: pass
-    bpy.types.USERPREF_MT_view.append(hash_prefmenu)
 
 def unregister():
-    try:
-        bpy.types.USERPREF_MT_view.remove(hash_prefmenu)
-    except: pass
+    perfoverride_unregister("Hash")
     clear_props()
     for c in classes:
         bpy.utils.unregister_class(c)

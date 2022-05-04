@@ -794,10 +794,6 @@ def init_props():
     scene.calc_is_inited = BoolProperty(name="Is Calculator Inited",
                                         default=False)
 
-    # area, space, and region have no custom properties...
-    screen = bpy.types.Screen
-    screen.is_calc_screen = BoolProperty(name="Is Calculator Screen")
-
 def clear_props():
     scene = bpy.types.Scene
     screen = bpy.types.Screen
@@ -821,37 +817,6 @@ def clear_props():
         del scene.calc_is_live
     if hasattr(scene, "calc_is_inited"):
         del scene.calc_is_inited
-    if hasattr(screen, "is_calc_screen"):
-        del screen.is_calc_screen
-
-def calc_inner_poll(self, context, pref_cls):
-    if context.screen.is_calc_screen == True:
-        return False
-
-    if hasattr(pref_cls, "poll"):
-        return pref_cls.poll(context)
-
-    return True
-
-def perf_overrides():
-    import os, sys
-    p = os.path.join(bpy.utils.system_resource('SCRIPTS'), 'startup', 'bl_ui')
-
-    if p not in sys.path:
-        sys.path.append(p)
-
-    import importlib
-    perf_mod = importlib.import_module("space_userpref")
-
-    def calc_pref_override(cls_name, orig_cls):
-        return type(cls_name, (orig_cls, bpy.types.Panel), {
-            "poll": classmethod(lambda self, context: calc_inner_poll(self, context, orig_cls) ),
-        })
-
-    for perf_cls in perf_mod.classes:
-        if bpy.types.Panel in perf_cls.__mro__:# and hasattr(perf_cls, "bl_context"):
-            exec(perf_cls.__name__ + ' = calc_pref_override("' + perf_cls.__name__ + '", perf_cls)')
-            exec("bpy.utils.register_class(" + perf_cls.__name__ + ")")
 
 
 class CALC_PT_PrefPanel(bpy.types.Panel):
@@ -864,7 +829,7 @@ class CALC_PT_PrefPanel(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        if context.screen.is_calc_screen == True:
+        if context.screen.pref_space_type == "Calculator":
             return True
         return False
 
@@ -1007,15 +972,11 @@ classes = [
 
 addon_keymaps = []
 
-def calc_prefmenu(self, context):
-    layout = self.layout
-    screen = context.screen
-    layout.prop(screen, "is_calc_screen")
-
+from blender_perf_overrides import perfoverride_register, perfoverride_unregister
 def register():
     for c in classes:
         bpy.utils.register_class(c)
-    perf_overrides()
+    perfoverride_register("Calculator")
     init_props()
     try:
         bpy.app.translations.register("blender_calculator", translation_dict)
@@ -1264,17 +1225,12 @@ def register():
     addon_keymaps.append((km, kmi))
     # TODO: del / left / right
 
-    bpy.types.USERPREF_MT_view.append(calc_prefmenu)
-
 def unregister():
-    try:
-        bpy.types.USERPREF_MT_view.remove(calc_prefmenu)
-    except: pass
-
     for km, kmi in addon_keymaps:
         km.keymap_items.remove(kmi)
     addon_keymaps.clear()
 
+    perfoverride_unregister("Calculator")
     clear_props()
     for c in classes:
         bpy.utils.unregister_class(c)
