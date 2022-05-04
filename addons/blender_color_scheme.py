@@ -99,7 +99,15 @@ translation_dict = {
     }
 }
 
-class COLORSCHEME_OT_ColorRandomize(bpy.types.Operator):
+class COLORSCHEME_PollMixin():
+    @classmethod
+    def poll(cls, context):
+        if context.space_data and context.space_data.type != "VIEW_3D" and \
+           context.space_data.type != "PREFERENCES":
+            return False
+        return True
+
+class COLORSCHEME_OT_ColorRandomize(COLORSCHEME_PollMixin, bpy.types.Operator):
     bl_idname = "colorscheme.colorrandomize"
     bl_label = "Random"
     bl_description = "Generate a random color"
@@ -109,12 +117,11 @@ class COLORSCHEME_OT_ColorRandomize(bpy.types.Operator):
         scene = context.scene
         scene.colorscheme_base = [random.random() for i in range(3)];
         return {'FINISHED'}
-    
 
 maxHueValue = 1.0
 maxSvValue = 1.0
 # from gcs-mainwindow-actions.cc
-class COLORSCHEME_OT_ColorLighten(bpy.types.Operator):
+class COLORSCHEME_OT_ColorLighten(COLORSCHEME_PollMixin, bpy.types.Operator):
     bl_idname = "colorscheme.colorlighten"
     bl_label = "Lighten Scheme"
     bl_description = "Increase the brightness"
@@ -127,7 +134,7 @@ class COLORSCHEME_OT_ColorLighten(bpy.types.Operator):
                                                 scene.colorscheme_base.v + 0.05 * maxSvValue)
         return {'FINISHED'}
 
-class COLORSCHEME_OT_ColorDarken(bpy.types.Operator):
+class COLORSCHEME_OT_ColorDarken(COLORSCHEME_PollMixin, bpy.types.Operator):
     bl_idname = "colorscheme.colordarken"
     bl_label = "Darken Scheme"
     bl_description = "Decrease the brightness"
@@ -141,7 +148,7 @@ class COLORSCHEME_OT_ColorDarken(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class COLORSCHEME_OT_ColorSaturate(bpy.types.Operator):
+class COLORSCHEME_OT_ColorSaturate(COLORSCHEME_PollMixin, bpy.types.Operator):
     bl_idname = "colorscheme.colorsaturate"
     bl_label = "Saturate Scheme"
     bl_description = "Increase the saturation"
@@ -154,7 +161,7 @@ class COLORSCHEME_OT_ColorSaturate(bpy.types.Operator):
                                                 scene.colorscheme_base.v)
         return {'FINISHED'}
 
-class COLORSCHEME_OT_ColorDesaturate(bpy.types.Operator):
+class COLORSCHEME_OT_ColorDesaturate(COLORSCHEME_PollMixin, bpy.types.Operator):
     bl_idname = "colorscheme.colordesaturate"
     bl_label = "Desaturate Scheme"
     bl_description = "Decrease the saturation"
@@ -196,7 +203,7 @@ class COLORSCHEME_PropertiesGroup(bpy.types.PropertyGroup):
 def method_to_length(method):
     return 2 if method == 'COMPLEMENTS' else 4 if method == 'TETRADS' else 3
 
-class COLORSCHEME_OT_ColorSchemeFavorite(bpy.types.Operator):
+class COLORSCHEME_OT_ColorSchemeFavorite(COLORSCHEME_PollMixin, bpy.types.Operator):
     bl_idname = "colorscheme.colorschemefavorite"
     bl_label = "Add to Favorites"
     bl_description = "Add the current color scheme to favorites"
@@ -212,7 +219,7 @@ class COLORSCHEME_OT_ColorSchemeFavorite(bpy.types.Operator):
         cs["color4"] = scene.colorscheme_calculated4
         return {'FINISHED'}
 
-class COLORSCHEME_OT_ColorSchemeFavoriteRemove(bpy.types.Operator):
+class COLORSCHEME_OT_ColorSchemeFavoriteRemove(COLORSCHEME_PollMixin, bpy.types.Operator):
     bl_idname = "colorscheme.colorschemefavoriteremove"
     bl_label = "Remove Selected"
     bl_description = "Remove the selected color scheme from your favorites"
@@ -469,6 +476,8 @@ classes = [
 
 from blender_perf_overrides import perfoverride_register, perfoverride_unregister
 
+addon_keymaps = []
+
 def register():
     unregister()
     for c in classes:
@@ -479,8 +488,39 @@ def register():
         bpy.app.translations.register("blender_color_scheme", translation_dict)
     except: pass
 
+    wm = bpy.context.window_manager
+    kc = wm.keyconfigs.addon
+    if not kc:
+        return
+    km = wm.keyconfigs.addon.keymaps.new(name='Window')
+    kmi = km.keymap_items.new(COLORSCHEME_OT_ColorRandomize.bl_idname, type='R', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(COLORSCHEME_OT_ColorLighten.bl_idname, type='PLUS', value='PRESS') # us keyboard
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(COLORSCHEME_OT_ColorLighten.bl_idname, type='PLUS', shift=True, value='PRESS') # jis keyboard
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(COLORSCHEME_OT_ColorDarken.bl_idname, type='MINUS', value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(COLORSCHEME_OT_ColorSaturate.bl_idname, type='PLUS', ctrl=True, value='PRESS') # us keyboard
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(COLORSCHEME_OT_ColorSaturate.bl_idname, type='PLUS', ctrl=True, shift=True, value='PRESS') # jis keyboard
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(COLORSCHEME_OT_ColorDesaturate.bl_idname, type='MINUS', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+    kmi = km.keymap_items.new(COLORSCHEME_OT_ColorSchemeFavorite.bl_idname, type='D', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+    kmi = km.keymap_items.new(COLORSCHEME_OT_ColorSchemeFavoriteRemove.bl_idname, type='X', ctrl=True, value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+
+
 
 def unregister():
+    for km, kmi in addon_keymaps:
+        km.keymap_items.remove(kmi)
+    addon_keymaps.clear()
+
     perfoverride_unregister("COLOR_SCHEME", "Color Scheme")
     clear_props()
     for c in classes:
