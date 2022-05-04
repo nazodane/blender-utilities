@@ -371,7 +371,7 @@ class COLORSCHEME_PT_PrefPanel(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        if context.screen.pref_space_type == "ColorScheme":
+        if context.screen.pref_space_type == "COLOR_SCHEME":
             return True
         return False
 
@@ -473,7 +473,7 @@ def register():
     unregister()
     for c in classes:
         bpy.utils.register_class(c)
-    perfoverride_register("ColorScheme")
+    perfoverride_register("COLOR_SCHEME", "Color Scheme")
     init_props()
     try:
         bpy.app.translations.register("blender_color_scheme", translation_dict)
@@ -481,7 +481,7 @@ def register():
 
 
 def unregister():
-    perfoverride_unregister("ColorScheme")
+    perfoverride_unregister("COLOR_SCHEME", "Color Scheme")
     clear_props()
     for c in classes:
         try:

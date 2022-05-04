@@ -63,19 +63,19 @@ def _perfoverride_overrides():
             exec("bpy.utils.register_class(" + perf_cls.__name__ + ")")
 
 import binascii
-def _perfoverride_type_name2enum_item(space_type_name):
-    return (space_type_name, space_type_name, space_type_name + " in Preferences spaces", \
-            binascii.crc32(space_type_name.encode()))
+def _perfoverride_type_name2enum_item(space_type_id, space_type_name):
+    return (space_type_id, space_type_name, space_type_name + " in Preferences spaces", \
+            binascii.crc32(space_type_id.encode()))
 
 def _perfoverride_pref_space_type_update(items):
     screen = bpy.types.Screen
     screen.pref_space_type = EnumProperty(name="Preferences space type", \
                                           items=items, default="Preferences")
 
-def perfoverride_register(new_space_type_name):
+def perfoverride_register(new_space_type_id, new_space_type_name):
     screen = bpy.types.Screen
 
-    pref_enum_item = _perfoverride_type_name2enum_item(new_space_type_name)
+    pref_enum_item = _perfoverride_type_name2enum_item(new_space_type_id, new_space_type_name)
 
     if hasattr(screen, "pref_space_type"):
         screen.pref_space_type.keywords["items"].add(pref_enum_item)
@@ -93,10 +93,10 @@ def perfoverride_register(new_space_type_name):
     _perfoverride_overrides()
     bpy.types.USERPREF_MT_view.append(_perfoverride_menu)
 
-def perfoverride_unregister(old_space_type_name):
+def perfoverride_unregister(old_space_type_id, old_space_type_name):
     screen = bpy.types.Screen
 
-    pref_enum_item = _perfoverride_type_name2enum_item(old_space_type_name)
+    pref_enum_item = _perfoverride_type_name2enum_item(old_space_type_id, old_space_type_name)
     if not hasattr(screen, "pref_space_type"):
         return
 

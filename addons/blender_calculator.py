@@ -829,7 +829,7 @@ class CALC_PT_PrefPanel(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        if context.screen.pref_space_type == "Calculator":
+        if context.screen.pref_space_type == "CALCULATOR":
             return True
         return False
 
@@ -976,7 +976,7 @@ from blender_perf_overrides import perfoverride_register, perfoverride_unregiste
 def register():
     for c in classes:
         bpy.utils.register_class(c)
-    perfoverride_register("Calculator")
+    perfoverride_register("CALCULATOR", "Calculator")
     init_props()
     try:
         bpy.app.translations.register("blender_calculator", translation_dict)
@@ -1230,7 +1230,7 @@ def unregister():
         km.keymap_items.remove(kmi)
     addon_keymaps.clear()
 
-    perfoverride_unregister("Calculator")
+    perfoverride_unregister("CALCULATOR", "Calculator")
     clear_props()
     for c in classes:
         bpy.utils.unregister_class(c)

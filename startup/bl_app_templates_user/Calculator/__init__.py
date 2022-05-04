@@ -26,6 +26,7 @@ def load_handler(_):
     import bpy
     import addon_utils
     addon_utils.enable("blender_calculator")
+    bpy.data.screens[0].pref_space_type = "CALCULATOR"
 
 def register():
     bpy.app.handlers.load_factory_startup_post.append(load_handler)

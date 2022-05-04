@@ -473,7 +473,7 @@ class HASH_PT_PrefPanel(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        if context.screen.pref_space_type == "Hash":
+        if context.screen.pref_space_type == "HASH":
             return True
         return False
 
@@ -540,14 +540,14 @@ from blender_perf_overrides import perfoverride_register, perfoverride_unregiste
 def register():
     for c in classes:
         bpy.utils.register_class(c)
-    perfoverride_register("Hash")
+    perfoverride_register("HASH", "Hash")
     init_props()
     try:
         bpy.app.translations.register("blender_hash", translation_dict)
     except: pass
 
 def unregister():
-    perfoverride_unregister("Hash")
+    perfoverride_unregister("HASH", "Hash")
     clear_props()
     for c in classes:
         bpy.utils.unregister_class(c)
