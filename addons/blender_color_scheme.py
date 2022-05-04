@@ -99,8 +99,6 @@ translation_dict = {
     }
 }
 
-
-
 class COLORSCHEME_OT_ColorRandomize(bpy.types.Operator):
     bl_idname = "colorscheme.colorrandomize"
     bl_label = "Random"
@@ -239,6 +237,7 @@ class COLORSCHEME_UL_ColorsList(bpy.types.UIList):
     def draw_filter(self, context, layout): # hide useless filter menus
         row = layout.row()
 
+
 class COLORSCHEME_PT_CustomPanel(bpy.types.Panel):
 
     bl_label = "Color Schemes"
@@ -362,6 +361,27 @@ def colorscheme_update(self, context):
         self["colorscheme_calculated2"] = tmp[1]
         self["colorscheme_calculated3"] = tmp[2]
 
+class COLORSCHEME_PT_PrefPanel(bpy.types.Panel):
+    bl_label = "Color Scheme"
+    bl_space_type = 'PREFERENCES'
+    bl_region_type = 'WINDOW'
+    bl_category = "Color Scheme"
+    bl_context = ""
+    bl_options = {'HIDE_HEADER'}
+
+    @classmethod
+    def poll(cls, context):
+        if context.screen.pref_space_type == "ColorScheme":
+            return True
+        return False
+
+#    def draw_header(self, context):
+#        layout = self.layout
+#        layout.label(text="", icon='PLUGIN')
+
+    def draw(self, context):
+        COLORSCHEME_PT_CustomPanel.draw(self, context)
+
 def init_props():
     scene = bpy.types.Scene
 
@@ -416,14 +436,22 @@ def init_props():
 
 def clear_props():
     scene = bpy.types.Scene
-    del scene.colorscheme_base
-    del scene.colorscheme_method
-    del scene.colorscheme_calculated1
-    del scene.colorscheme_calculated2
-    del scene.colorscheme_calculated3
-    del scene.colorscheme_calculated4
-    del scene.colorscheme_favorites
-    del scene.active_colorscheme_favorite_index
+    if hasattr(scene, "colorscheme_base"):
+        del scene.colorscheme_base
+    if hasattr(scene, "colorscheme_method"):
+        del scene.colorscheme_method
+    if hasattr(scene, "colorscheme_calculated1"):
+        del scene.colorscheme_calculated1
+    if hasattr(scene, "colorscheme_calculated2"):
+        del scene.colorscheme_calculated2
+    if hasattr(scene, "colorscheme_calculated3"):
+        del scene.colorscheme_calculated3
+    if hasattr(scene, "colorscheme_calculated4"):
+        del scene.colorscheme_calculated4
+    if hasattr(scene, "colorscheme_favorites"):
+        del scene.colorscheme_favorites
+    if hasattr(scene, "active_colorscheme_favorite_index"):
+        del scene.active_colorscheme_favorite_index
 
 classes = [
     COLORSCHEME_OT_ColorRandomize,
@@ -436,12 +464,16 @@ classes = [
     COLORSCHEME_PT_CustomPanel,
     COLORSCHEME_PropertiesGroup,
     COLORSCHEME_UL_ColorsList,
+    COLORSCHEME_PT_PrefPanel,
 ]
 
+from blender_perf_overrides import perfoverride_register, perfoverride_unregister
 
 def register():
+    unregister()
     for c in classes:
         bpy.utils.register_class(c)
+    perfoverride_register("ColorScheme")
     init_props()
     try:
         bpy.app.translations.register("blender_color_scheme", translation_dict)
@@ -449,9 +481,12 @@ def register():
 
 
 def unregister():
+    perfoverride_unregister("ColorScheme")
     clear_props()
     for c in classes:
-        bpy.utils.unregister_class(c)
+        try:
+            bpy.utils.unregister_class(c)
+        except: pass
     try:
         bpy.app.translations.unregister("blender_color_scheme")
     except: pass
