@@ -524,7 +524,8 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
             sz4 = texset("iChannel3", gtex[3])
 
             try:
-                shader.uniform_float("iChannelTime", (t, t, t, t))
+                loc = shader.uniform_from_name("iChannelTime")
+                shader.uniform_vector_float(loc, pack("4f", t, t, t, t), 1, 4)
             except: pass
 
             try:
