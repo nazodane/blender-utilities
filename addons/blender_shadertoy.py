@@ -100,6 +100,8 @@ class SHADERTOY_PT_TexPanel(bpy.types.Panel):
         row.enabled = False
         row.template_ID(text, "shadertoy_parent", new="text.new", open="text.open")
         
+        layout.label(text="Common")
+        layout.template_ID(mtxt, "shadertoy_common", new="text.new", open="text.open")
         layout.label(text="Buffer A")
         layout.template_ID(mtxt, "shadertoy_buffer_a", new="text.new", open="text.open")
         layout.label(text="Buffer B")
@@ -382,6 +384,8 @@ def shadertoy_shaderid_update(self, context):
 
         if _type == "image":
             ptxt = txt
+        elif _type == "common":
+            ptxt.shadertoy_common = txt
         elif _type == "buffer" and output_id == "4dXGR8": # TODO: order dependent...
             ptxt.shadertoy_buffer_a = txt
         elif _type == "buffer" and output_id == "XsXGR8":
@@ -681,12 +685,14 @@ def text2gtex(txt):
     return (get_gtex(str(txt.shadertoy_tex1)), get_gtex(str(txt.shadertoy_tex2)),
             get_gtex(str(txt.shadertoy_tex3)), get_gtex(str(txt.shadertoy_tex4)))
 
-def text2shader(txt, _type):
+def text2shader(txt, ctxt, _type):
     if not txt:
         return None
 
     gtex = text2gtex(txt)
     code = txt.as_string()
+    if ctxt:
+        code = ctxt.as_string() + "\n" + code
 
     # https://www.shadertoy.com/view/XsjGDt -> ok
     # https://www.shadertoy.com/view/3sySRK -> ok
@@ -794,12 +800,12 @@ def shadertoy_shader_update(self, context):
                                                              gpu.types.GPUOffScreen(1024, 1024, format="RGBA32F"), \
                                                              gpu.types.GPUOffScreen(1024, 1024, format="RGBA32F"))
 
-    driver_namespace["shadertoy_image_shader"] = text2shader(txt, "Image")
-    driver_namespace["shadertoy_buffer_a_shader"] = text2shader(txt.shadertoy_buffer_a, "Image")
-    driver_namespace["shadertoy_buffer_b_shader"] = text2shader(txt.shadertoy_buffer_b, "Image")
-    driver_namespace["shadertoy_buffer_c_shader"] = text2shader(txt.shadertoy_buffer_c, "Image")
-    driver_namespace["shadertoy_buffer_d_shader"] = text2shader(txt.shadertoy_buffer_d, "Image")
-    driver_namespace["shadertoy_cubemap_a_shader"] = text2shader(txt.shadertoy_cubemap_a, "Cubemap")
+    driver_namespace["shadertoy_image_shader"] = text2shader(txt, txt.shadertoy_common, "Image")
+    driver_namespace["shadertoy_buffer_a_shader"] = text2shader(txt.shadertoy_buffer_a, txt.shadertoy_common, "Image")
+    driver_namespace["shadertoy_buffer_b_shader"] = text2shader(txt.shadertoy_buffer_b, txt.shadertoy_common, "Image")
+    driver_namespace["shadertoy_buffer_c_shader"] = text2shader(txt.shadertoy_buffer_c, txt.shadertoy_common, "Image")
+    driver_namespace["shadertoy_buffer_d_shader"] = text2shader(txt.shadertoy_buffer_d, txt.shadertoy_common, "Image")
+    driver_namespace["shadertoy_cubemap_a_shader"] = text2shader(txt.shadertoy_cubemap_a, txt.shadertoy_common, "Cubemap")
 
 def shadertoy_parent_update(self, context):
     text = self
@@ -807,6 +813,8 @@ def shadertoy_parent_update(self, context):
         if t.shadertoy_parent == text:
             t.shadertoy_parent = None
 
+    if text.shadertoy_common:
+        text.shadertoy_common.shadertoy_parent = text
     if text.shadertoy_buffer_a:
         text.shadertoy_buffer_a.shadertoy_parent = text
     if text.shadertoy_buffer_b:
@@ -846,6 +854,8 @@ def init_props():
                                         update=shadertoy_shader_update)
 
     text.shadertoy_parent = PointerProperty(type=bpy.types.Text, name="Shadertoy Parent")
+    text.shadertoy_common = PointerProperty(type=bpy.types.Text, name="Shadertoy Common", \
+                                               update=shadertoy_parent_update)
     text.shadertoy_buffer_a = PointerProperty(type=bpy.types.Text, name="Shadertoy Buffer A", \
                                               update=shadertoy_parent_update)
     text.shadertoy_buffer_b = PointerProperty(type=bpy.types.Text, name="Shadertoy Buffer B", \
