@@ -430,6 +430,7 @@ class ShadertoyRunScriptOperator(bpy.types.Operator):
 
 import datetime
 import numpy as np
+from struct import pack
 
 class ShadertoyRenderEngine(bpy.types.RenderEngine):
     bl_idname = 'SHADERTOY_ENGINE'
@@ -499,7 +500,7 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
             except: pass
 
             def texset(ch, tex):
-                sz = (0, 0, 1.0)
+                sz = [0.0, 0.0, 1.0]
                 if type(tex) == gpu.types.GPUOffScreen: # buffer
                     tex = tex.texture_color
                 elif type(tex) == tuple and type(tex[0]) == gpu.types.GPUOffScreen: # cubemap
@@ -513,7 +514,7 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                             tex[5].texture_color.read()
                         )).ravel()))
                 if tex:
-                    sz = (tex.width, tex.height, 1.0)
+                    sz = [tex.width, tex.height, 1.0]
                     shader.uniform_sampler(ch, tex)
                 return sz
 
@@ -527,7 +528,8 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
             except: pass
 
             try:
-                shader.uniform_float("iChannelResolution", [sz1, sz2, sz3, sz4])
+                loc = shader.uniform_from_name("iChannelResolution")
+                shader.uniform_vector_float(loc, pack("12f", *sz1, *sz2, *sz3, *sz4), 3, 4)
             except: pass
 
             if raydir:
@@ -703,9 +705,10 @@ def text2shader(txt, ctxt, _type):
     # https://www.shadertoy.com/view/tdSSzV (2d texture) -> ok
     # https://www.shadertoy.com/view/MsXGz8 (iChannelTime) -> ok
     # https://www.shadertoy.com/view/4s2Xzc (iChannelResolution) -> ok
+    # https://www.shadertoy.com/view/tdcBDN (common) -> ok
     # https://www.shadertoy.com/view/XsBSDR (cubemap) -> wrong
     # https://www.shadertoy.com/view/XdGXzm (multipass) -> ok
-    # https://www.shadertoy.com/view/Xsd3DB (multipass+texture) -> wrong??
+    # https://www.shadertoy.com/view/Xsd3DB (multipass+texture) -> ok
 
     shader = gpu.types.GPUShader("""
 in vec2 pos;
