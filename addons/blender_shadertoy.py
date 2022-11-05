@@ -23,6 +23,7 @@
 import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
+import aud
 
 bl_info = {
     "name": "Shadertoy Viewer",
@@ -48,6 +49,7 @@ from bpy.props import (
     StringProperty,
     EnumProperty,
     PointerProperty,
+    BoolProperty,
 #    IntProperty,
 )
 
@@ -277,7 +279,7 @@ class shadertoy_async_thread(threading.Thread):
 
 def shadertoy_shader_run(self, context):
     scene = self
-    shadertoy_shader_update(self, context)
+    shadertoy_shader_update(self, context, -1)
 
     scene.render.engine = "SHADERTOY_ENGINE"
     scene.display_settings.display_device = 'None'
@@ -427,6 +429,67 @@ class ShadertoyRunScriptOperator(bpy.types.Operator):
         shadertoy_shader_run(context.scene, context)
 
         return {'FINISHED'}
+
+class ShadertoyAnimationPlayOperator(bpy.types.Operator):
+    bl_idname = "screen.animation_play" # override
+    bl_name = bpy.ops.screen.animation_play.get_rna_type().name
+    bl_label = bpy.ops.screen.animation_play.get_rna_type().description
+    #bl_options = {'UNDO','REGISTER'}
+    reverse: BoolProperty(name=bpy.ops.screen.animation_play.get_rna_type().properties["reverse"].name,
+                          description=bpy.ops.screen.animation_play.get_rna_type().properties["reverse"].description,
+                          default=bpy.ops.screen.animation_play.get_rna_type().properties["reverse"].default)
+    sync: BoolProperty(name=bpy.ops.screen.animation_play.get_rna_type().properties["sync"].name,
+                       description=bpy.ops.screen.animation_play.get_rna_type().properties["sync"].description,
+                       default=bpy.ops.screen.animation_play.get_rna_type().properties["sync"].default)
+
+    @classmethod
+    def poll(cls, context):
+#        if G.is_rendering:
+#            return False
+        if not context.window:
+            return False
+        if not context.screen:
+            return False
+        return True
+    
+    def execute(self, context):
+        screen = context.screen
+        if screen.is_animation_playing:
+            if "shadertoy_audio_handle1" in driver_namespace:
+                driver_namespace["shadertoy_audio_handle1"].pause()
+            if "shadertoy_audio_handle2" in driver_namespace:
+                driver_namespace["shadertoy_audio_handle2"].pause()
+            if "shadertoy_audio_handle3" in driver_namespace:
+                driver_namespace["shadertoy_audio_handle3"].pause()
+            if "shadertoy_audio_handle4" in driver_namespace:
+                driver_namespace["shadertoy_audio_handle4"].pause()
+        else:
+            if "shadertoy_audio_handle1" in driver_namespace:
+                driver_namespace["shadertoy_audio_handle1"].resume()
+            if "shadertoy_audio_handle2" in driver_namespace:
+                driver_namespace["shadertoy_audio_handle2"].resume()
+            if "shadertoy_audio_handle3" in driver_namespace:
+                driver_namespace["shadertoy_audio_handle3"].resume()
+            if "shadertoy_audio_handle4" in driver_namespace:
+                driver_namespace["shadertoy_audio_handle4"].resume()
+
+#        print("called!!!")
+
+        reverse = self.reverse
+        sync = self.sync
+
+        bpy.utils.unregister_class(ShadertoyAnimationPlayOperator)
+        ret = bpy.ops.screen.animation_play(reverse=reverse, sync=sync) # TODO: context passing? bpy.context.copy()
+
+        if not screen.is_animation_playing:
+            bpy.utils.register_class(ShadertoyAnimationPlayOperator)
+        else:
+            def lazy_reregister(scene): # prevent crashing
+#                print("lazy register")
+                bpy.utils.register_class(ShadertoyAnimationPlayOperator)
+                bpy.app.handlers.frame_change_pre.remove(lazy_reregister)
+            bpy.app.handlers.frame_change_pre.append(lazy_reregister)
+        return ret
 
 import datetime
 import numpy as np
@@ -710,7 +773,7 @@ def text2shader(txt, ctxt, _type):
     # https://www.shadertoy.com/view/XsBSDR (cubemap) -> wrong
     # https://www.shadertoy.com/view/XdGXzm (multipass) -> ok
     # https://www.shadertoy.com/view/Xsd3DB (multipass+texture) -> ok
-
+    # https://www.shadertoy.com/view/MsXSDS (audio texure) -> wrong
     shader = gpu.types.GPUShader("""
 in vec2 pos;
 void main()
@@ -757,8 +820,19 @@ void main(){
 
     return (shader, batch, (gtex[0][1], gtex[1][1], gtex[2][1], gtex[3][1]))
 
+def shadertoy_shader_update1(self, context):
+    return shadertoy_shader_update(self, context, 1)
 
-def shadertoy_shader_update(self, context):
+def shadertoy_shader_update2(self, context):
+    return shadertoy_shader_update(self, context, 2)
+
+def shadertoy_shader_update3(self, context):
+    return shadertoy_shader_update(self, context, 3)
+
+def shadertoy_shader_update4(self, context):
+    return shadertoy_shader_update(self, context, 4)
+
+def shadertoy_shader_update(self, context, tex_id):
     scene = context.scene
     txt = scene.shadertoy_code
     if not txt:
@@ -811,6 +885,24 @@ def shadertoy_shader_update(self, context):
     driver_namespace["shadertoy_buffer_d_shader"] = text2shader(txt.shadertoy_buffer_d, txt.shadertoy_common, "Image")
     driver_namespace["shadertoy_cubemap_a_shader"] = text2shader(txt.shadertoy_cubemap_a, txt.shadertoy_common, "Cubemap")
 
+    ctex = txt.shadertoy_tex1 if tex_id == 1 else \
+           txt.shadertoy_tex2 if tex_id == 2 else \
+           txt.shadertoy_tex3 if tex_id == 3 else \
+           txt.shadertoy_tex4 if tex_id == 4 else None
+
+    drv_id = "shadertoy_audio_handle%s"%tex_id
+    if drv_id in driver_namespace:
+        driver_namespace[drv_id].stop()
+        del driver_namespace[drv_id]
+
+    if ctex and re.search(r'.mp3$', ctex):
+        d = shadertoy_addon_directory()
+        data_d = os.path.join(d, "data")
+        fpath = os.path.join(data_d, ctex)
+        snd = aud.Sound(fpath)
+        device = aud.Device()
+        driver_namespace[drv_id] = device.play(snd)
+
 def shadertoy_parent_update(self, context):
     text = self
     for t in bpy.data.texts:
@@ -849,13 +941,13 @@ def init_props():
     p.images_location = os.path.join(d, "preview")
     driver_namespace["shadertoy_tex_preview"] = p
     text.shadertoy_tex1 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
-                                        update=shadertoy_shader_update)
+                                        update=shadertoy_shader_update1)
     text.shadertoy_tex2 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
-                                        update=shadertoy_shader_update)
+                                        update=shadertoy_shader_update2)
     text.shadertoy_tex3 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
-                                        update=shadertoy_shader_update)
+                                        update=shadertoy_shader_update3)
     text.shadertoy_tex4 = EnumProperty(items=shadertoy_generate_tex_preview(), default="none.png", \
-                                        update=shadertoy_shader_update)
+                                        update=shadertoy_shader_update4)
 
     text.shadertoy_parent = PointerProperty(type=bpy.types.Text, name="Shadertoy Parent")
     text.shadertoy_common = PointerProperty(type=bpy.types.Text, name="Shadertoy Common", \
@@ -970,6 +1062,7 @@ classes = [
     ShadertoyRenderEngine,
     ShadertoyModalOperator,
     ShadertoyRunScriptOperator,
+    ShadertoyAnimationPlayOperator,
     SHADERTOY_PT_TexPanel,
 ]
 
