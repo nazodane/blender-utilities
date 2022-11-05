@@ -593,8 +593,7 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                     st = driver_namespace["shadertoy_audio%s"%idx]
 
                     samples = st[0][math.floor(st[1].position * aud.Device().rate - 2048): math.floor(st[1].position * aud.Device().rate)]
-                    samples = (np.array([x[0]+x[1] for x in samples]) + 1.0) * 0.5
-                    # TODO: currently left channel only, we need downmix
+                    samples = (np.array([(x[0]+x[1])*0.5 for x in samples]) + 1.0) * 0.5
                     # XXX: aud.Device().rate may not be good
 
                     if len(samples) != 2048:
