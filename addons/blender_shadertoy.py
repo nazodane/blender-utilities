@@ -24,6 +24,7 @@ import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
 import aud
+import math
 
 bl_info = {
     "name": "Shadertoy Viewer",
@@ -455,23 +456,23 @@ class ShadertoyAnimationPlayOperator(bpy.types.Operator):
     def execute(self, context):
         screen = context.screen
         if screen.is_animation_playing:
-            if "shadertoy_audio_handle1" in driver_namespace:
-                driver_namespace["shadertoy_audio_handle1"].pause()
-            if "shadertoy_audio_handle2" in driver_namespace:
-                driver_namespace["shadertoy_audio_handle2"].pause()
-            if "shadertoy_audio_handle3" in driver_namespace:
-                driver_namespace["shadertoy_audio_handle3"].pause()
-            if "shadertoy_audio_handle4" in driver_namespace:
-                driver_namespace["shadertoy_audio_handle4"].pause()
+            if "shadertoy_audio1" in driver_namespace:
+                driver_namespace["shadertoy_audio1"][1].pause()
+            if "shadertoy_audio2" in driver_namespace:
+                driver_namespace["shadertoy_audio2"][1].pause()
+            if "shadertoy_audio3" in driver_namespace:
+                driver_namespace["shadertoy_audio3"][1].pause()
+            if "shadertoy_audio4" in driver_namespace:
+                driver_namespace["shadertoy_audio4"][1].pause()
         else:
-            if "shadertoy_audio_handle1" in driver_namespace:
-                driver_namespace["shadertoy_audio_handle1"].resume()
-            if "shadertoy_audio_handle2" in driver_namespace:
-                driver_namespace["shadertoy_audio_handle2"].resume()
-            if "shadertoy_audio_handle3" in driver_namespace:
-                driver_namespace["shadertoy_audio_handle3"].resume()
-            if "shadertoy_audio_handle4" in driver_namespace:
-                driver_namespace["shadertoy_audio_handle4"].resume()
+            if "shadertoy_audio1" in driver_namespace:
+                driver_namespace["shadertoy_audio1"][1].resume()
+            if "shadertoy_audio2" in driver_namespace:
+                driver_namespace["shadertoy_audio2"][1].resume()
+            if "shadertoy_audio3" in driver_namespace:
+                driver_namespace["shadertoy_audio3"][1].resume()
+            if "shadertoy_audio4" in driver_namespace:
+                driver_namespace["shadertoy_audio4"][1].resume()
 
 #        print("called!!!")
 
@@ -562,7 +563,7 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                 shader.uniform_float("iFrameRate", framerate)
             except: pass
 
-            def texset(ch, tex):
+            def texset(ch, tex, idx):
                 sz = [0.0, 0.0, 1.0]
                 if type(tex) == gpu.types.GPUOffScreen: # buffer
                     tex = tex.texture_color
@@ -576,15 +577,46 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                             tex[4].texture_color.read(),
                             tex[5].texture_color.read()
                         )).ravel()))
+                elif tex == None:
+                    # ValueError: GPUTexture.__new__: Only Buffer of format `FLOAT` is currently supported
+#                    tex = gpu.types.GPUTexture((2, 512), format="RGBA8UI", \
+#                        data=gpu.types.Buffer("UBYTE", 2*512*4,
+#                                              np.concatenate((np.zeros(512*4),
+#                                              np.zeros(512*4)))))
+
+# MsXSDS
+
+#                    print("called")
+
+                    if "shadertoy_audio%s"%idx not in driver_namespace:
+                        return sz
+                    st = driver_namespace["shadertoy_audio%s"%idx]
+
+                    samples = st[0][math.floor(st[1].position * aud.Device().rate - 2048): math.floor(st[1].position * aud.Device().rate)]
+                    samples = (np.array([x[0]+x[1] for x in samples]) + 1.0) * 0.5
+                    # TODO: currently left channel only, we need downmix
+                    # XXX: aud.Device().rate may not be good
+
+                    if len(samples) != 2048:
+                        samples =  np.pad(samples, (2048, 0))
+
+                    print(samples)
+
+                    tex = gpu.types.GPUTexture((512, 2), format="RGBA32F", \
+                         data=gpu.types.Buffer("FLOAT", 2*512*4, \
+                                               np.concatenate((np.zeros(512*4), \
+                                               samples[0:512], \
+                                               np.zeros(512*3)))))
+
                 if tex:
                     sz = [tex.width, tex.height, 1.0]
                     shader.uniform_sampler(ch, tex)
                 return sz
 
-            sz1 = texset("iChannel0", gtex[0])
-            sz2 = texset("iChannel1", gtex[1])
-            sz3 = texset("iChannel2", gtex[2])
-            sz4 = texset("iChannel3", gtex[3])
+            sz1 = texset("iChannel0", gtex[0], 1)
+            sz2 = texset("iChannel1", gtex[1], 2)
+            sz3 = texset("iChannel2", gtex[2], 3)
+            sz4 = texset("iChannel3", gtex[3], 4)
 
             try:
                 loc = shader.uniform_from_name("iChannelTime")
@@ -727,6 +759,8 @@ def get_gtex(tex_name):
 
             return ("Cube", gpu.types.GPUTexture(img.size[0], \
                            format="RGBA32F", is_cubemap = True, data=buf))
+        elif re.search(r'.mp3$', tex_name):
+            return ("2D", None)
         else:
             img = bpy.data.images.load(fpath)
             return ("2D", gpu.texture.from_image(img)) # should be fast (using cache)
@@ -885,23 +919,29 @@ def shadertoy_shader_update(self, context, tex_id):
     driver_namespace["shadertoy_buffer_d_shader"] = text2shader(txt.shadertoy_buffer_d, txt.shadertoy_common, "Image")
     driver_namespace["shadertoy_cubemap_a_shader"] = text2shader(txt.shadertoy_cubemap_a, txt.shadertoy_common, "Cubemap")
 
-    ctex = txt.shadertoy_tex1 if tex_id == 1 else \
-           txt.shadertoy_tex2 if tex_id == 2 else \
-           txt.shadertoy_tex3 if tex_id == 3 else \
-           txt.shadertoy_tex4 if tex_id == 4 else None
+    def t(ctex, tex_id):
+        print(ctex)
+        drv_id = "shadertoy_audio%s"%tex_id
+        if drv_id in driver_namespace:
+            driver_namespace[drv_id][1].stop()
+            del driver_namespace[drv_id]
 
-    drv_id = "shadertoy_audio_handle%s"%tex_id
-    if drv_id in driver_namespace:
-        driver_namespace[drv_id].stop()
-        del driver_namespace[drv_id]
+        if ctex and re.search(r'.mp3$', ctex):
+            d = shadertoy_addon_directory()
+            data_d = os.path.join(d, "data")
+            fpath = os.path.join(data_d, ctex)
+            snd = aud.Sound(fpath)
+            device = aud.Device()
+            driver_namespace[drv_id] = (snd.data(), device.play(snd))
 
-    if ctex and re.search(r'.mp3$', ctex):
-        d = shadertoy_addon_directory()
-        data_d = os.path.join(d, "data")
-        fpath = os.path.join(data_d, ctex)
-        snd = aud.Sound(fpath)
-        device = aud.Device()
-        driver_namespace[drv_id] = device.play(snd)
+    if tex_id in [1, -1]:
+        t(txt.shadertoy_tex1, 1)
+    if tex_id in [2, -1]:
+        t(txt.shadertoy_tex2, 2)
+    if tex_id in [3, -1]:
+        t(txt.shadertoy_tex3, 3)
+    if tex_id in [4, -1]:
+        t(txt.shadertoy_tex4, 4)
 
 def shadertoy_parent_update(self, context):
     text = self
