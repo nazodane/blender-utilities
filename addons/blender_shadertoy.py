@@ -578,12 +578,6 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                             tex[5].texture_color.read()
                         )).ravel()))
                 elif tex == None:
-
-# MsXSDS
-# tdcBDN
-
-#                    print("called")
-
                     if "shadertoy_audio%s"%idx not in driver_namespace:
                         return sz, tex
                     st = driver_namespace["shadertoy_audio%s"%idx]
@@ -601,6 +595,7 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
 
                     rfreqs = np.fft.rfft(windowed)
                     t = np.square(np.array((rfreqs.real, rfreqs.imag))).sum(axis = 0)
+                    # TODO: implemenet time-directional smoothing
                     dbMag = np.where(t == 0.0, 0.0, 0.06204207142857143 * np.log(t) + 0.4824771428571428)
 
                     buf = gpu.types.Buffer("FLOAT", 512*2, [*dbMag[0:512], *samples[0:512]])
