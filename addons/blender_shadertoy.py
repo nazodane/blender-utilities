@@ -769,6 +769,29 @@ def get_gtex(tex_name):
 
             return ("Cube", gpu.types.GPUTexture(img.size[0], \
                            format="RGBA32F", is_cubemap = True, data=buf))
+        elif re.search(r'\.bin$', tex_name):
+            # Shadertoy .BIN Format
+            # signature[4]
+            # resolution[4][3]
+            # number_of_channels[1]
+            # layout[1] - unused
+            # format[2] (0=int8, 10=float32) - unused
+
+            f = open(fpath, "rb")
+            data = f.read()
+            nch = data[16]
+            assert(nch in [1,4])
+            fmt = "R32F" if nch == 1 else "RGBA32F"
+            import struct
+            x = struct.unpack("I",data[4:8])[0]
+            y = struct.unpack("I",data[8:12])[0]
+            z = struct.unpack("I",data[12:16])[0]
+            sz = x*y*z*nch
+
+            arr = np.fromstring(data[20:20+sz], dtype=np.uint8)
+            buf = gpu.types.Buffer("FLOAT", sz, arr.astype(np.float32) / 255.0)
+            tex = gpu.types.GPUTexture((x, y, z), format=fmt, data=buf)
+            return ("3D", tex)
         elif re.search(r'\.mp3$', tex_name):
             return ("2D", None)
         elif re.search(r'(\.ogv|\.webm)$', tex_name):
