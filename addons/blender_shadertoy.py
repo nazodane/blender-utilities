@@ -595,7 +595,15 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                     if len(samples) != 2048:
                         samples =  np.pad(samples, (2048, 0))
 
-                    buf = gpu.types.Buffer("FLOAT", 512*2, [*([0]*512), *samples[0:512]])
+                    windowed = np.zeros([2048])
+                    for i, d in enumerate(samples):
+                      windowed[i] = d * np.append(np.cos(np.array((0.00613592, 0.00306796)) * i) * np.array((0.08, -0.5)), 0.42).sum()
+
+                    rfreqs = np.fft.rfft(windowed)
+                    t = np.square(np.array((rfreqs.real, rfreqs.imag))).sum(axis = 0)
+                    dbMag = np.where(t == 0.0, 0.0, 0.06204207142857143 * np.log(t) + 0.4824771428571428)
+
+                    buf = gpu.types.Buffer("FLOAT", 512*2, [*dbMag[0:512], *samples[0:512]])
                     tex = gpu.types.GPUTexture((512, 2), format="R32F", data=buf)
 
                     # ValueError: GPUTexture.__new__: Only Buffer of format `FLOAT` is currently supported
