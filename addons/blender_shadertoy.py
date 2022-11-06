@@ -578,11 +578,6 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                             tex[5].texture_color.read()
                         )).ravel()))
                 elif tex == None:
-                    # ValueError: GPUTexture.__new__: Only Buffer of format `FLOAT` is currently supported
-#                    tex = gpu.types.GPUTexture((512, 2), format="R8UI", \
-#                        data=gpu.types.Buffer("UBYTE", 2*512,
-#                                              np.concatenate((np.zeros(512*4),
-#                                              np.zeros(512*4)))))
 
 # MsXSDS
 # tdcBDN
@@ -590,7 +585,7 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
 #                    print("called")
 
                     if "shadertoy_audio%s"%idx not in driver_namespace:
-                        return sz
+                        return sz, tex
                     st = driver_namespace["shadertoy_audio%s"%idx]
 
                     samples = st[0][math.floor(st[1].position * aud.Device().rate - 2048): math.floor(st[1].position * aud.Device().rate)]
@@ -600,23 +595,23 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                     if len(samples) != 2048:
                         samples =  np.pad(samples, (2048, 0))
 
-#                    buf = gpu.types.Buffer("FLOAT", 512*2, [*([0.0]*512), *samples[0:512]])
-#                    print(buf)
-
-                    buf = gpu.types.Buffer("FLOAT", 512*2, [*([0.0]*512), *samples[0:512]])
-#                    print(buf)
-
+                    buf = gpu.types.Buffer("FLOAT", 512*2, [*([0]*512), *samples[0:512]])
                     tex = gpu.types.GPUTexture((512, 2), format="R32F", data=buf)
+
+                    # ValueError: GPUTexture.__new__: Only Buffer of format `FLOAT` is currently supported
+#                    buf = gpu.types.Buffer("UBYTE", 512*2, [*([0]*512), *np.uint8(samples[0:512])])
+#                    tex = gpu.types.GPUTexture((512, 2), format="R8UI", data=buf))
+
 
                 if tex:
                     sz = [tex.width, tex.height, 1.0]
                     shader.uniform_sampler(ch, tex)
-                return sz
+                return sz, tex
 
-            sz1 = texset("iChannel0", gtex[0], 1)
-            sz2 = texset("iChannel1", gtex[1], 2)
-            sz3 = texset("iChannel2", gtex[2], 3)
-            sz4 = texset("iChannel3", gtex[3], 4)
+            sz1, tex1 = texset("iChannel0", gtex[0], 1)
+            sz2, tex2 = texset("iChannel1", gtex[1], 2)
+            sz3, tex3 = texset("iChannel2", gtex[2], 3)
+            sz4, tex4 = texset("iChannel3", gtex[3], 4)
 
             try:
                 loc = shader.uniform_from_name("iChannelTime")
