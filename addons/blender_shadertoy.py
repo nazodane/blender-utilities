@@ -579,12 +579,13 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                         )).ravel()))
                 elif tex == None:
                     # ValueError: GPUTexture.__new__: Only Buffer of format `FLOAT` is currently supported
-#                    tex = gpu.types.GPUTexture((2, 512), format="RGBA8UI", \
-#                        data=gpu.types.Buffer("UBYTE", 2*512*4,
+#                    tex = gpu.types.GPUTexture((512, 2), format="R8UI", \
+#                        data=gpu.types.Buffer("UBYTE", 2*512,
 #                                              np.concatenate((np.zeros(512*4),
 #                                              np.zeros(512*4)))))
 
 # MsXSDS
+# tdcBDN
 
 #                    print("called")
 
@@ -599,13 +600,13 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                     if len(samples) != 2048:
                         samples =  np.pad(samples, (2048, 0))
 
-                    print(samples)
+#                    buf = gpu.types.Buffer("FLOAT", 512*2, [*([0.0]*512), *samples[0:512]])
+#                    print(buf)
 
-                    tex = gpu.types.GPUTexture((512, 2), format="RGBA32F", \
-                         data=gpu.types.Buffer("FLOAT", 2*512*4, \
-                                               np.concatenate((np.zeros(512*4), \
-                                               samples[0:512], \
-                                               np.zeros(512*3)))))
+                    buf = gpu.types.Buffer("FLOAT", 512*2, [*([0.0]*512), *samples[0:512]])
+#                    print(buf)
+
+                    tex = gpu.types.GPUTexture((512, 2), format="R32F", data=buf)
 
                 if tex:
                     sz = [tex.width, tex.height, 1.0]
