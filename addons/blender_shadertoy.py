@@ -579,14 +579,14 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                             tex[4].texture_color.read(),
                             tex[5].texture_color.read()
                         )).ravel()))
-                elif type(tex) == bpy.types.Image: # movies
+                elif type(tex) == tuple and type(tex[0]) == bpy.types.Image: # movies
                     if "shadertoy_audio%s"%idx not in driver_namespace:
                         return sz, tex, time
                     st = driver_namespace["shadertoy_audio%s"%idx]
                     time = st[1].position
-                    img = tex
+                    img = tex[0]
                     img.reload() # needed for working
-                    img.gl_load(frame=math.floor(time * 30)) # TODO: framerate is wrong now...
+                    img.gl_load(frame=math.floor(time * tex[1][0] / tex[1][1]))
                     tex = gpu.texture.from_image(img)
                 elif tex == None:
                     if "shadertoy_audio%s"%idx not in driver_namespace:
@@ -773,7 +773,19 @@ def get_gtex(tex_name):
             return ("2D", None)
         elif re.search(r'(\.ogv|\.webm)$', tex_name):
             img = bpy.data.images.load(fpath)
-            return ("2D", img)
+
+            rates = (0, 0) # XXX: find better way?
+            # for i in *.ogv *.webm; do echo $i;ffprobe -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 -show_entries stream=r_frame_rate $i;done
+            if tex_name == "3405e48f74815c7baa49133bdc835142948381fbe003ad2f12f5087715731153.ogv":
+                rates = (2997, 100)
+            elif tex_name == "c3a071ecf273428bc72fc72b2dd972671de8da420a2d4f917b75d20e1c24b34c.ogv":
+                rates = (30000, 1001)
+            elif tex_name == "35c87bcb8d7af24c54d41122dadb619dd920646a0bd0e477e7bdc6d12876df17.webm":
+                rates = (30, 1)
+            elif tex_name == "e81e818ac76a8983d746784b423178ee9f6cdcdf7f8e8d719341a6fe2d2ab303.webm":
+                rates = (25, 1)
+
+            return ("2D", (img, rates))
         else:
             img = bpy.data.images.load(fpath)
             return ("2D", gpu.texture.from_image(img)) # should be fast (using cache)
