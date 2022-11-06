@@ -563,9 +563,10 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                 shader.uniform_float("iFrameRate", framerate)
             except: pass
 
-            def texset(ch, tex, idx, time):
+            def texset(ch, tex, idx, time, scene):
                 sz = [0.0, 0.0, 1.0]
                 time = time
+                #tdSSzV
                 if type(tex) == gpu.types.GPUOffScreen: # buffer
                     tex = tex.texture_color
                 elif type(tex) == tuple and type(tex[0]) == gpu.types.GPUOffScreen: # cubemap
@@ -578,6 +579,15 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                             tex[4].texture_color.read(),
                             tex[5].texture_color.read()
                         )).ravel()))
+                elif type(tex) == bpy.types.Image: # movies
+                    if "shadertoy_audio%s"%idx not in driver_namespace:
+                        return sz, tex, time
+                    st = driver_namespace["shadertoy_audio%s"%idx]
+                    time = st[1].position
+                    img = tex
+                    img.reload() # needed for working
+                    img.gl_load(frame=math.floor(time * 30)) # TODO: framerate is wrong now...
+                    tex = gpu.texture.from_image(img)
                 elif tex == None:
                     if "shadertoy_audio%s"%idx not in driver_namespace:
                         return sz, tex, time
@@ -613,10 +623,10 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                     shader.uniform_sampler(ch, tex)
                 return sz, tex, time
 
-            sz1, tex1, ct1 = texset("iChannel0", gtex[0], 1, t)
-            sz2, tex2, ct2 = texset("iChannel1", gtex[1], 2, t)
-            sz3, tex3, ct3 = texset("iChannel2", gtex[2], 3, t)
-            sz4, tex4, ct4 = texset("iChannel3", gtex[3], 4, t)
+            sz1, tex1, ct1 = texset("iChannel0", gtex[0], 1, t, scene)
+            sz2, tex2, ct2 = texset("iChannel1", gtex[1], 2, t, scene)
+            sz3, tex3, ct3 = texset("iChannel2", gtex[2], 3, t, scene)
+            sz4, tex4, ct4 = texset("iChannel3", gtex[3], 4, t, scene)
 
             try:
                 loc = shader.uniform_from_name("iChannelTime")
@@ -759,8 +769,11 @@ def get_gtex(tex_name):
 
             return ("Cube", gpu.types.GPUTexture(img.size[0], \
                            format="RGBA32F", is_cubemap = True, data=buf))
-        elif re.search(r'.mp3$', tex_name):
+        elif re.search(r'\.mp3$', tex_name):
             return ("2D", None)
+        elif re.search(r'(\.ogv|\.webm)$', tex_name):
+            img = bpy.data.images.load(fpath)
+            return ("2D", img)
         else:
             img = bpy.data.images.load(fpath)
             return ("2D", gpu.texture.from_image(img)) # should be fast (using cache)
@@ -926,13 +939,18 @@ def shadertoy_shader_update(self, context, tex_id):
             driver_namespace[drv_id][1].stop()
             del driver_namespace[drv_id]
 
-        if ctex and re.search(r'.mp3$', ctex):
+        if ctex and re.search(r'(.mp3|.ogv|.webm)$', ctex):
             d = shadertoy_addon_directory()
             data_d = os.path.join(d, "data")
             fpath = os.path.join(data_d, ctex)
             snd = aud.Sound(fpath)
             device = aud.Device()
-            driver_namespace[drv_id] = (snd.data(), device.play(snd))
+            hnd = device.play(snd)
+            if re.search(r'(.ogv|.webm)$', ctex):
+                hnd.volume = 0.0
+            else:
+                hnd.volume = 1.0
+            driver_namespace[drv_id] = (snd.data(), hnd)
 
     if tex_id in [1, -1]:
         t(txt.shadertoy_tex1, 1)
