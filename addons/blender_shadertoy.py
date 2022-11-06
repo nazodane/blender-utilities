@@ -563,8 +563,9 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                 shader.uniform_float("iFrameRate", framerate)
             except: pass
 
-            def texset(ch, tex, idx):
+            def texset(ch, tex, idx, time):
                 sz = [0.0, 0.0, 1.0]
+                time = time
                 if type(tex) == gpu.types.GPUOffScreen: # buffer
                     tex = tex.texture_color
                 elif type(tex) == tuple and type(tex[0]) == gpu.types.GPUOffScreen: # cubemap
@@ -579,9 +580,10 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                         )).ravel()))
                 elif tex == None:
                     if "shadertoy_audio%s"%idx not in driver_namespace:
-                        return sz, tex
+                        return sz, tex, time
                     st = driver_namespace["shadertoy_audio%s"%idx]
 
+                    time = st[1].position
                     samples = st[0][math.floor(st[1].position * aud.Device().rate - 2048): math.floor(st[1].position * aud.Device().rate)]
                     samples = (np.array([(x[0]+x[1])*0.5 for x in samples]) + 1.0) * 0.5
                     # XXX: aud.Device().rate may not be good
@@ -595,7 +597,7 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
 
                     rfreqs = np.fft.rfft(windowed)
                     t = np.square(np.array((rfreqs.real, rfreqs.imag))).sum(axis = 0)
-                    # TODO: implemenet time-directional smoothing
+                    # TODO: implement time-directional smoothing
                     dbMag = np.where(t == 0.0, 0.0, 0.06204207142857143 * np.log(t) + 0.4824771428571428)
 
                     buf = gpu.types.Buffer("FLOAT", 512*2, [*dbMag[0:512], *samples[0:512]])
@@ -609,16 +611,16 @@ class ShadertoyRenderEngine(bpy.types.RenderEngine):
                 if tex:
                     sz = [tex.width, tex.height, 1.0]
                     shader.uniform_sampler(ch, tex)
-                return sz, tex
+                return sz, tex, time
 
-            sz1, tex1 = texset("iChannel0", gtex[0], 1)
-            sz2, tex2 = texset("iChannel1", gtex[1], 2)
-            sz3, tex3 = texset("iChannel2", gtex[2], 3)
-            sz4, tex4 = texset("iChannel3", gtex[3], 4)
+            sz1, tex1, ct1 = texset("iChannel0", gtex[0], 1, t)
+            sz2, tex2, ct2 = texset("iChannel1", gtex[1], 2, t)
+            sz3, tex3, ct3 = texset("iChannel2", gtex[2], 3, t)
+            sz4, tex4, ct4 = texset("iChannel3", gtex[3], 4, t)
 
             try:
                 loc = shader.uniform_from_name("iChannelTime")
-                shader.uniform_vector_float(loc, pack("4f", t, t, t, t), 1, 4)
+                shader.uniform_vector_float(loc, pack("4f", ct1, ct2, ct3, ct4), 1, 4)
             except: pass
 
             try:
@@ -805,7 +807,7 @@ def text2shader(txt, ctxt, _type):
     # https://www.shadertoy.com/view/XsBSDR (cubemap) -> wrong
     # https://www.shadertoy.com/view/XdGXzm (multipass) -> ok
     # https://www.shadertoy.com/view/Xsd3DB (multipass+texture) -> ok
-    # https://www.shadertoy.com/view/MsXSDS (audio texure) -> wrong
+    # https://www.shadertoy.com/view/MsXSDS (audio texure) -> ok
     shader = gpu.types.GPUShader("""
 in vec2 pos;
 void main()
